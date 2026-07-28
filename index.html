@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartCampus AI — Class 5 Learning Portal</title>
+
+  <!-- Firebase SDK (imported as modules) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDBYiMVATYiffsYFKFqyuiIftG53GWZnXQ",
+      authDomain: "smartcampus-ac3cc.firebaseapp.com",
+      projectId: "smartcampus-ac3cc",
+      storageBucket: "smartcampus-ac3cc.firebasestorage.app",
+      messagingSenderId: "741878301871",
+      appId: "1:741878301871:web:5b74cc5d9924d17caf805a",
+      measurementId: "G-MJ1HZGQX1K"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Make auth and db globally available
+    window.__firebase = { auth, db, signInAnonymously, onAuthStateChanged, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, collection, query, where, getDocs, deleteDoc };
+    console.log("🔥 Firebase initialized!");
+  </script>
+
+  <style>
+    /* ===== RESET & VARIABLES (same as before) ===== */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --primary: #2563eb; --primary-light: #3b82f6; --primary-dark: #1e40af;
+      --secondary: #f59e0b; --success: #22c55e; --danger: #ef4444;
+      --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+      --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
+      --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
+      --radius: 16px; --shadow: 0 4px 24px rgba(0,0,0,0.08); --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+      --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4f8; color: var(--gray-800); line-height:1.6; min-height:100vh; }
+    a { text-decoration:none; color:inherit; }
+    button { cursor:pointer; border:none; outline:none; font-family:inherit; font-size:inherit; }
+    input, textarea, select { font-family:inherit; font-size:inherit; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background: var(--gray-100); }
+    ::-webkit-scrollbar-thumb { background: var(--primary); border-radius:8px; }
+
+    /* toast */
+    .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; max-width:400px; width:100%; }
+    .toast { background: var(--gray-900); color:#fff; padding:14px 20px; border-radius:12px; box-shadow:var(--shadow-lg); font-size:15px; font-weight:500; display:flex; align-items:center; justify-content:space-between; gap:12px; animation:slideIn 0.4s ease; }
+    .toast .close { background:none; color:var(--gray-400); font-size:20px; line-height:1; padding:0 4px; }
+    .toast.success { border-left:4px solid var(--success); }
+    .toast.error { border-left:4px solid var(--danger); }
+    .toast.info { border-left:4px solid var(--primary); }
+    @keyframes slideIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+
+    /* header */
+    .app-header { background: var(--gray-900); color:#fff; padding:12px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.3); }
+    .app-header .logo { display:flex; align-items:center; gap:10px; font-size:22px; font-weight:800; letter-spacing:-0.5px; }
+    .app-header .logo .icon { background:var(--primary); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .app-header .logo span { color:var(--secondary); }
+    .app-header .nav-links { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .app-header .nav-links a { padding:6px 16px; border-radius:30px; font-size:14px; font-weight:600; transition:var(--transition); background:rgba(255,255,255,0.06); color:var(--gray-300); }
+    .app-header .nav-links a:hover, .app-header .nav-links a.active { background:rgba(255,255,255,0.14); color:#fff; }
+    .app-header .nav-links a.admin-link { background:rgba(239,68,68,0.2); color:#fca5a5; }
+    .app-header .nav-links a.admin-link:hover { background:rgba(239,68,68,0.35); color:#fff; }
+    .app-header .lang-toggle { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; }
+
+    /* main */
+    .app-main { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+    .page { display:none; animation:fadeUp 0.4s ease; }
+    .page.active { display:block; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    /* home */
+    .hero { background:linear-gradient(135deg, var(--primary-dark), var(--primary)); border-radius:var(--radius); padding:36px 32px; color:#fff; margin-bottom:32px; box-shadow:0 8px 30px rgba(37,99,235,0.3); position:relative; overflow:hidden; }
+    .hero::after { content:'✨'; position:absolute; top:-20px; right:20px; font-size:120px; opacity:0.1; }
+    .hero h1 { font-size:32px; font-weight:800; }
+    .hero h1 span { color:var(--secondary); }
+    .hero p { font-size:18px; opacity:0.9; margin-top:4px; }
+    .subject-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:18px; margin-top:8px; }
+    .subject-card { background:#fff; border-radius:var(--radius); padding:24px 20px 20px; box-shadow:var(--shadow); border:1px solid var(--gray-200); transition:var(--transition); cursor:pointer; text-align:center; }
+    .subject-card:hover { transform:translateY(-6px); box-shadow:var(--shadow-lg); border-color:var(--primary-light); }
+    .subject-card .icon { font-size:44px; display:block; margin-bottom:6px; }
+    .subject-card .name { font-size:18px; font-weight:700; }
+    .subject-card .count { font-size:13px; color:var(--gray-500); margin-top:2px; }
+    .subject-card .badge { display:inline-block; margin-top:8px; padding:2px 14px; border-radius:20px; font-size:12px; font-weight:600; background:var(--gray-100); color:var(--gray-600); }
+
+    /* subject page */
+    .subject-header { display:flex; align-items:center; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+    .subject-header .icon { font-size:48px; }
+    .subject-header h2 { font-size:28px; font-weight:800; }
+    .subject-header .back-btn { background:var(--gray-200); padding:6px 20px; border-radius:30px; font-weight:600; font-size:14px; color:var(--gray-700); transition:var(--transition); margin-left:auto; }
+    .subject-header .back-btn:hover { background:var(--gray-300); }
+    .chapter-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:16px; }
+    .chapter-item { background:#fff; border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); border:1px solid var(--gray-200); transition:var(--transition); cursor:pointer; display:flex; flex-direction:column; }
+    .chapter-item:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--primary-light); }
+    .chapter-item .num { font-size:13px; font-weight:600; color:var(--primary); background:#eef4ff; display:inline-block; padding:0 12px; border-radius:12px; line-height:24px; align-self:flex-start; margin-bottom:6px; }
+    .chapter-item h3 { font-size:18px; font-weight:700; line-height:1.3; }
+    .chapter-item p { font-size:14px; color:var(--gray-500); margin-top:4px; flex:1; }
+    .chapter-item .meta { display:flex; align-items:center; gap:12px; margin-top:10px; font-size:13px; color:var(--gray-500); }
+    .chapter-item .meta .dot { width:6px; height:6px; border-radius:50%; background:var(--gray-300); }
+    .chapter-item .meta .status { font-weight:600; }
+    .chapter-item .meta .status.done { color:var(--success); }
+    .chapter-item .meta .status.pending { color:var(--secondary); }
+
+    /* chapter view */
+    .chapter-view { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--gray-200); overflow:hidden; }
+    .chapter-view .ch-header { padding:20px 28px 16px; background:var(--gray-50); border-bottom:1px solid var(--gray-200); display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .chapter-view .ch-header .info .num { font-size:14px; font-weight:600; color:var(--primary); background:#eef4ff; padding:0 14px; border-radius:20px; line-height:28px; display:inline-block; }
+    .chapter-view .ch-header .info h2 { font-size:26px; font-weight:800; margin-top:2px; }
+    .chapter-view .ch-header .back-btn { background:var(--gray-200); padding:6px 20px; border-radius:30px; font-weight:600; font-size:14px; color:var(--gray-700); transition:var(--transition); }
+    .chapter-view .ch-header .back-btn:hover { background:var(--gray-300); }
+    .chapter-view .ch-tabs { display:flex; gap:4px; padding:0 28px; background:var(--gray-50); border-bottom:1px solid var(--gray-200); flex-wrap:wrap; }
+    .chapter-view .ch-tabs button { padding:10px 22px; font-size:15px; font-weight:600; background:transparent; color:var(--gray-500); border-bottom:3px solid transparent; transition:var(--transition); border-radius:0; }
+    .chapter-view .ch-tabs button:hover { color:var(--gray-800); background:rgba(0,0,0,0.02); }
+    .chapter-view .ch-tabs button.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .chapter-view .ch-body { padding:24px 28px 32px; }
+    .ch-body .tab-pane { display:none; animation:fadeUp 0.3s ease; }
+    .ch-body .tab-pane.active { display:block; }
+
+    /* content styles */
+    .content-block { margin-bottom:20px; }
+    .content-block h1 { font-size:28px; font-weight:800; margin-bottom:8px; color:var(--gray-900); }
+    .content-block h2 { font-size:22px; font-weight:700; margin-bottom:6px; color:var(--gray-900); }
+    .content-block h3 { font-size:18px; font-weight:700; margin-bottom:4px; color:var(--gray-800); }
+    .content-block h4 { font-size:16px; font-weight:700; margin-bottom:4px; color:var(--gray-800); }
+    .content-block p { font-size:15px; color:var(--gray-700); line-height:1.7; margin-bottom:8px; }
+    .content-block ul, .content-block ol { padding-left:24px; margin-bottom:8px; }
+    .content-block ul li, .content-block ol li { font-size:15px; color:var(--gray-700); line-height:1.7; margin-bottom:2px; }
+    .content-block .highlight-box { background:var(--gray-50); border-left:4px solid var(--primary); padding:14px 18px; border-radius:0 10px 10px 0; margin:12px 0; }
+    .content-block .highlight-box strong { color:var(--gray-900); }
+    .content-block .tip-list { background:#fef9e7; border-left:4px solid var(--secondary); padding:14px 18px; border-radius:0 10px 10px 0; margin:12px 0; }
+    .content-block .img-placeholder { background:var(--gray-100); border-radius:12px; padding:20px; text-align:center; color:var(--gray-500); font-size:14px; margin:12px 0; border:2px dashed var(--gray-300); min-height:80px; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .content-block .img-placeholder .icon { font-size:32px; }
+    .content-block table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+    .content-block table th, .content-block table td { border:1px solid var(--gray-200); padding:8px 12px; text-align:left; }
+    .content-block table th { background:var(--gray-50); font-weight:700; color:var(--gray-800); }
+    .content-block table td { color:var(--gray-700); }
+    .content-block .card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px; margin:12px 0; }
+    .content-block .card-grid .card { background:var(--gray-50); border-radius:12px; padding:14px 16px; border:1px solid var(--gray-200); text-align:center; }
+    .content-block .card-grid .card .emoji { font-size:32px; display:block; }
+    .content-block .card-grid .card .label { font-weight:600; font-size:15px; margin-top:4px; }
+    .content-block .card-grid .card .desc { font-size:13px; color:var(--gray-500); }
+
+    /* MCQ, fill, QA */
+    .question-item { background:var(--gray-50); border-radius:12px; padding:16px 20px; margin-bottom:14px; border:1px solid var(--gray-200); }
+    .question-item .q-text { font-weight:600; font-size:16px; margin-bottom:8px; }
+    .question-item .options { display:flex; flex-direction:column; gap:4px; padding-left:4px; }
+    .question-item .options label { display:flex; align-items:center; gap:10px; font-size:15px; cursor:pointer; padding:4px 8px; border-radius:6px; transition:0.15s; }
+    .question-item .options label:hover { background:#eef4ff; }
+    .question-item .options input[type="radio"] { accent-color:var(--primary); width:16px; height:16px; cursor:pointer; }
+    .question-item .result-badge { margin-top:8px; font-size:14px; font-weight:600; padding:4px 14px; border-radius:20px; display:inline-block; }
+    .question-item .result-badge.correct { background:#dcfce7; color:#16a34a; }
+    .question-item .result-badge.wrong { background:#fee2e2; color:#dc2626; }
+    .question-item .result-badge.pending { background:#fef9c3; color:#ca8a04; }
+    .fill-item { background:var(--gray-50); border-radius:12px; padding:14px 20px; margin-bottom:12px; border:1px solid var(--gray-200); }
+    .fill-item .q-text { font-size:15px; margin-bottom:6px; }
+    .fill-item .q-text .blank { display:inline-block; min-width:80px; border-bottom:2px dashed var(--primary); margin:0 4px; padding:0 6px; }
+    .fill-item input { border:1px solid var(--gray-300); border-radius:6px; padding:4px 12px; font-size:14px; width:180px; max-width:100%; margin-top:4px; }
+    .fill-item input:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 3px rgba(37,99,235,0.15); }
+    .fill-item .fill-result { margin-top:6px; font-size:14px; font-weight:600; }
+    .fill-item .fill-result .ans { color:#16a34a; }
+    .fill-item .fill-result .wrong-ans { color:#dc2626; }
+    .qa-item { background:var(--gray-50); border-radius:12px; padding:14px 20px; margin-bottom:10px; border:1px solid var(--gray-200); }
+    .qa-item .q { font-weight:600; font-size:15px; color:var(--gray-900); }
+    .qa-item .a { margin-top:4px; font-size:15px; color:var(--gray-700); padding-left:8px; border-left:3px solid var(--primary); padding-left:14px; }
+    .qa-item .a .label { font-weight:600; color:var(--primary); }
+
+    .btn-primary { background:var(--primary); color:#fff; padding:8px 24px; border-radius:30px; font-weight:600; font-size:15px; transition:var(--transition); box-shadow:0 2px 12px rgba(37,99,235,0.25); }
+    .btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); }
+    .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .btn-secondary { background:var(--gray-200); color:var(--gray-700); padding:8px 22px; border-radius:30px; font-weight:600; font-size:14px; transition:var(--transition); }
+    .btn-secondary:hover { background:var(--gray-300); }
+    .btn-success { background:var(--success); color:#fff; padding:8px 24px; border-radius:30px; font-weight:600; font-size:15px; transition:var(--transition); }
+    .btn-success:hover { background:#16a34a; transform:translateY(-1px); }
+    .btn-danger { background:var(--danger); color:#fff; padding:8px 24px; border-radius:30px; font-weight:600; font-size:15px; transition:var(--transition); }
+    .btn-danger:hover { background:#dc2626; transform:translateY(-1px); }
+    .btn-group { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+
+    .score-banner { background:var(--gray-900); border-radius:12px; padding:14px 20px; color:#fff; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+    .score-banner .score-num { font-size:26px; font-weight:800; color:var(--secondary); }
+    .score-banner .score-label { font-size:14px; opacity:0.7; }
+
+    /* admin */
+    .admin-login { max-width:400px; margin:60px auto; background:#fff; border-radius:var(--radius); padding:32px 28px; box-shadow:var(--shadow-lg); border:1px solid var(--gray-200); }
+    .admin-login h2 { font-size:24px; font-weight:800; text-align:center; margin-bottom:4px; }
+    .admin-login p { text-align:center; color:var(--gray-500); margin-bottom:20px; }
+    .admin-login label { font-weight:600; font-size:14px; display:block; margin-bottom:4px; }
+    .admin-login input { width:100%; padding:10px 14px; border:1px solid var(--gray-300); border-radius:10px; margin-bottom:14px; font-size:15px; }
+    .admin-login input:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 3px rgba(37,99,235,0.15); }
+    .admin-login .error { color:var(--danger); font-size:14px; margin-top:-8px; margin-bottom:12px; display:none; }
+
+    .admin-panel { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--gray-200); overflow:hidden; }
+    .admin-panel .admin-header { padding:18px 24px; background:var(--gray-50); border-bottom:1px solid var(--gray-200); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .admin-panel .admin-header h2 { font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px; }
+    .admin-panel .admin-body { padding:24px; }
+    .admin-panel .admin-body .filters { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .admin-panel .admin-body .filters select, .admin-panel .admin-body .filters input { padding:8px 14px; border:1px solid var(--gray-300); border-radius:10px; font-size:14px; background:#fff; }
+    .admin-panel .admin-body .filters select:focus, .admin-panel .admin-body .filters input:focus { border-color:var(--primary); outline:none; }
+
+    .admin-chapter-list { display:flex; flex-direction:column; gap:10px; margin-top:12px; max-height:500px; overflow-y:auto; }
+    .admin-chapter-item { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--gray-50); border-radius:10px; border:1px solid var(--gray-200); flex-wrap:wrap; gap:8px; }
+    .admin-chapter-item .info { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .admin-chapter-item .info .subject-badge { font-size:12px; font-weight:600; padding:2px 12px; border-radius:12px; background:var(--gray-200); color:var(--gray-600); }
+    .admin-chapter-item .info .title { font-weight:600; font-size:15px; }
+    .admin-chapter-item .actions { display:flex; gap:6px; }
+    .admin-chapter-item .actions button { padding:4px 14px; border-radius:20px; font-size:13px; font-weight:600; transition:var(--transition); }
+    .admin-chapter-item .actions .edit-btn { background:#eef4ff; color:var(--primary); }
+    .admin-chapter-item .actions .edit-btn:hover { background:#dbeafe; }
+    .admin-chapter-item .actions .del-btn { background:#fee2e2; color:var(--danger); }
+    .admin-chapter-item .actions .del-btn:hover { background:#fecaca; }
+
+    .admin-form { background:var(--gray-50); border-radius:12px; padding:20px 24px; margin-top:20px; border:1px solid var(--gray-200); display:none; }
+    .admin-form.active { display:block; animation:fadeUp 0.3s ease; }
+    .admin-form h3 { font-size:20px; font-weight:700; margin-bottom:12px; }
+    .admin-form .form-group { margin-bottom:12px; }
+    .admin-form .form-group label { font-weight:600; font-size:14px; display:block; margin-bottom:2px; }
+    .admin-form .form-group input, .admin-form .form-group select, .admin-form .form-group textarea { width:100%; padding:8px 14px; border:1px solid var(--gray-300); border-radius:10px; font-size:14px; background:#fff; }
+    .admin-form .form-group textarea { min-height:120px; resize:vertical; font-family:'Courier New', monospace; font-size:13px; line-height:1.5; }
+    .admin-form .form-group input:focus, .admin-form .form-group select:focus, .admin-form .form-group textarea:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
+    .admin-form .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .admin-form .form-actions { display:flex; gap:10px; margin-top:8px; }
+
+    .empty-state { text-align:center; padding:40px 20px; color:var(--gray-500); }
+    .empty-state .icon { font-size:48px; display:block; margin-bottom:8px; }
+
+    /* responsive */
+    @media (max-width:640px) {
+      .app-header { padding:10px 16px; }
+      .app-header .logo { font-size:17px; }
+      .app-header .logo .icon { width:34px; height:34px; font-size:16px; }
+      .app-header .nav-links a { font-size:12px; padding:4px 12px; }
+      .hero { padding:24px 20px; }
+      .hero h1 { font-size:24px; }
+      .hero p { font-size:16px; }
+      .subject-grid { grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:12px; }
+      .subject-card { padding:16px 12px; }
+      .subject-card .icon { font-size:32px; }
+      .subject-card .name { font-size:15px; }
+      .chapter-list { grid-template-columns:1fr; }
+      .chapter-view .ch-header { padding:14px 16px 12px; }
+      .chapter-view .ch-header .info h2 { font-size:20px; }
+      .chapter-view .ch-tabs { padding:0 12px; }
+      .chapter-view .ch-tabs button { padding:8px 14px; font-size:13px; }
+      .chapter-view .ch-body { padding:16px 14px 20px; }
+      .admin-form .form-row { grid-template-columns:1fr; }
+      .admin-panel .admin-body { padding:16px; }
+      .admin-chapter-item { flex-direction:column; align-items:stretch; }
+      .admin-chapter-item .actions { justify-content:flex-end; }
+      .app-main { padding:16px 12px 40px; }
+    }
+    @media (max-width:400px) { .subject-grid { grid-template-columns:1fr 1fr; gap:10px; } }
+    .hidden { display:none !important; }
+    .text-center { text-align:center; }
+    .mt-8 { margin-top:8px; }
+    .mt-16 { margin-top:16px; }
+    .w-full { width:100%; }
+
+    /* subject colors */
+    .subj-science .badge { background:#e8f5e9; color:#2e7d32; }
+    .subj-maths .badge { background:#ffebee; color:#c62828; }
+    .subj-english .badge { background:#e3f2fd; color:#0d47a1; }
+    .subj-hindi .badge { background:#fff3e0; color:#e65100; }
+    .subj-sst .badge { background:#f3e5f5; color:#6a1b9a; }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="app-header">
+    <div class="logo">
+      <div class="icon">📚</div>
+      SmartCampus <span>AI</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button class="lang-toggle" id="langToggle">🌐 English</button>
+      <nav class="nav-links">
+        <a href="#" data-page="home" class="active">🏠 Home</a>
+        <a href="#" data-page="admin" class="admin-link">🔐 Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ===== MAIN ===== -->
+  <main class="app-main">
+
+    <!-- HOME -->
+    <section class="page active" id="page-home">
+      <div class="hero">
+        <h1>🌟 Welcome, <span>Learner!</span></h1>
+        <p id="heroDesc">Explore Class 5 subjects with fun chapters, quizzes, and activities!</p>
+      </div>
+      <div class="subject-grid" id="subjectGrid"></div>
+    </section>
+
+    <!-- SUBJECT -->
+    <section class="page" id="page-subject">
+      <div class="subject-header">
+        <span class="icon" id="subjIcon">📖</span>
+        <h2 id="subjTitle">Subject</h2>
+        <button class="back-btn" id="subjBack">← Back</button>
+      </div>
+      <div class="chapter-list" id="chapterList"></div>
+    </section>
+
+    <!-- CHAPTER -->
+    <section class="page" id="page-chapter">
+      <div class="chapter-view" id="chapterView"></div>
+    </section>
+
+    <!-- ADMIN -->
+    <section class="page" id="page-admin">
+      <div id="adminContent"></div>
+    </section>
+
+  </main>
+
+  <script>
+    // ================================================================
+    //  FIREBASE HELPERS (wrapped)
+    // ================================================================
+
+    const fb = window.__firebase;
+    let currentUser = null;
+
+    if (fb) {
+      fb.onAuthStateChanged(fb.auth, (user) => {
+        if (user) {
+          currentUser = user;
+          console.log('✅ Firebase user:', user.uid);
+          // Load data from Firestore after login
+          loadAllDataFromFirestore();
+        } else {
+          fb.signInAnonymously(fb.auth).catch(e => console.warn('Auth error:', e));
+        }
+      });
+    } else {
+      console.warn('Firebase not loaded, using localStorage fallback.');
+    }
+
+    // ================================================================
+    //  DATA LAYER with Firebase (or localStorage fallback)
+    // ================================================================
+
+    const STORE_KEY = 'smartcampus_data';
+    let appData = null; // will be loaded
+
+    // Default subjects structure
+    const SUBJECTS = {
+      science: { id: 'science', name: 'Science', icon: '🔬' },
+      maths: { id: 'maths', name: 'Mathematics', icon: '📐' },
+      english: { id: 'english', name: 'English', icon: '📖' },
+      hindi: { id: 'hindi', name: 'Hindi', icon: '🕉️' },
+      sst: { id: 'sst', name: 'Social Studies', icon: '🌍' }
+    };
+
+    // Sample Chapter 1 (Science)
+    const SAMPLE_CHAPTER = {
+      id: 1,
+      title: "Food, Health and Hygiene",
+      titleHi: "भोजन, स्वास्थ्य और स्वच्छता",
+      summary: "Nutrients, balanced diet, hygiene, diseases & prevention.",
+      summaryHi: "पोषक तत्व, संतुलित आहार, स्वच्छता, बीमारियाँ और रोकथाम।",
+      content: `
+        <div class="content-block">
+          <h2>🍎 Nutrients in Food</h2>
+          <p>Food gives us energy, helps us grow, and protects us from diseases. It contains <strong>carbohydrates, proteins, fats, vitamins, and minerals</strong>. Roughage and water are also important.</p>
+          <div class="highlight-box"><strong>Balanced Diet:</strong> A diet which contains all nutrients, roughage and water in the right amount.</div>
+          <h3>🧼 Hygiene</h3>
+          <p>Hygiene means following good habits. Personal hygiene includes keeping body clean. Social hygiene includes keeping surroundings clean.</p>
+          <ul class="tip-list"><li>Wash hands with soap for 30 seconds.</li><li>Brush teeth twice daily.</li><li>Clip nails regularly.</li></ul>
+          <h3>🦠 Diseases</h3>
+          <p><strong>Communicable:</strong> spread person-to-person (e.g., cold, flu).<br><strong>Non-communicable:</strong> do not spread (e.g., scurvy, rickets).</p>
+          <div class="card-grid">
+            <div class="card"><span class="emoji">🥗</span><div class="label">Carbohydrates</div><div class="desc">Energy</div></div>
+            <div class="card"><span class="emoji">🥩</span><div class="label">Proteins</div><div class="desc">Growth</div></div>
+            <div class="card"><span class="emoji">🧈</span><div class="label">Fats</div><div class="desc">Energy storage</div></div>
+            <div class="card"><span class="emoji">🍊</span><div class="label">Vitamins</div><div class="desc">Protection</div></div>
+          </div>
+          <div class="img-placeholder"><span class="icon">🥗</span> Food groups — carbohydrates, proteins, vitamins</div>
+          <h3>📊 Deficiency Diseases</h3>
+          <table><thead><tr><th>Disease</th><th>Cause</th><th>Symptoms</th></tr></thead>
+            <tbody><tr><td>Night blindness</td><td>Vitamin A</td><td>Difficulty seeing at night</td></tr>
+            <tr><td>Scurvy</td><td>Vitamin C</td><td>Bleeding gums</td></tr>
+            <tr><td>Rickets</td><td>Vitamin D</td><td>Soft bones</td></tr>
+            <tr><td>Anaemia</td><td>Iron</td><td>Fatigue, pale skin</td></tr></tbody>
+          </table>
+        </div>
+      `,
+      mcqs: [
+        { q: "Which nutrient helps in growth?", opts: ["Proteins", "Fats", "Vitamins", "Minerals"], ans: 0 },
+        { q: "Deficiency of Vitamin C causes?", opts: ["Scurvy", "Rickets", "Anaemia", "Goitre"], ans: 0 },
+        { q: "Which is a communicable disease?", opts: ["Rickets", "Scurvy", "Cholera", "Marasmus"], ans: 2 },
+        { q: "Main cause of goitre?", opts: ["Iron deficiency", "Iodine deficiency", "Calcium deficiency",
+            "Vitamin D deficiency"
+          ], ans: 1 },
+        { q: "How to prevent communicable diseases?", opts: ["Avoid contact with sick", "Eat junk food",
+            "Don't wash hands", "Drink dirty water"
+          ], ans: 0 }
+      ],
+      fills: [
+        { q: "Food gives us ______, helps us grow, and protects us from diseases.", ans: "energy" },
+        { q: "A disease can be identified by analysing its ______.", ans: "symptoms" },
+        { q: "Deficiency of ______ in diet leads to anaemia.", ans: "iron" },
+        { q: "Hygiene means following ______.", ans: "good habits" }
+      ],
+      qa: [
+        { q: "What is a balanced diet?", a: "A diet that contains all nutrients, roughage and water in the right amount." },
+        { q: "What is a disease? How can it be identified?",
+          a: "A disease is a condition where the body does not function normally. It can be identified by analysing its symptoms." },
+        { q: "Name two ways by which communicable diseases spread.",
+          a: "Through contact with an infected person and through contaminated food and water." }
+      ]
+    };
+
+    function getDefaultData() {
+      return {
+        subjects: {
+          science: { ...SUBJECTS.science, chapters: [SAMPLE_CHAPTER] },
+          maths: { ...SUBJECTS.maths, chapters: [] },
+          english: { ...SUBJECTS.english, chapters: [] },
+          hindi: { ...SUBJECTS.hindi, chapters: [] },
+          sst: { ...SUBJECTS.sst, chapters: [] }
+        }
+      };
+    }
+
+    // ---------- Load from Firebase or localStorage ----------
+    async function loadAllDataFromFirestore() {
+      if (!fb) {
+        // fallback to localStorage
+        loadFromLocalStorage();
+        renderHome();
+        return;
+      }
+      try {
+        const docRef = fb.doc(fb.db, 'portalData', 'main');
+        const docSnap = await fb.getDoc(docRef);
+        if (docSnap.exists()) {
+          appData = docSnap.data();
+          // ensure all subjects exist
+          for (const key of Object.keys(SUBJECTS)) {
+            if (!appData.subjects[key]) {
+              appData.subjects[key] = { ...SUBJECTS[key], chapters: [] };
+            }
+          }
+        } else {
+          // first time: create default
+          appData = getDefaultData();
+          await fb.setDoc(docRef, appData);
+        }
+        renderHome();
+      } catch (e) {
+        console.warn('Firestore load error, using localStorage fallback:', e);
+        loadFromLocalStorage();
+        renderHome();
+      }
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (raw) {
+          appData = JSON.parse(raw);
+          for (const key of Object.keys(SUBJECTS)) {
+            if (!appData.subjects[key]) appData.subjects[key] = { ...SUBJECTS[key], chapters: [] };
+          }
+        } else {
+          appData = getDefaultData();
+          localStorage.setItem(STORE_KEY, JSON.stringify(appData));
+        }
+      } catch (e) {
+        appData = getDefaultData();
+      }
+    }
+
+    // ---------- Save to Firebase (or localStorage) ----------
+    async function saveAppData() {
+      if (fb && currentUser) {
+        try {
+          const docRef = fb.doc(fb.db, 'portalData', 'main');
+          await fb.setDoc(docRef, appData);
+          console.log('✅ Data saved to Firestore');
+        } catch (e) {
+          console.warn('Firestore save error, saving to localStorage:', e);
+          localStorage.setItem(STORE_KEY, JSON.stringify(appData));
+        }
+      } else {
+        localStorage.setItem(STORE_KEY, JSON.stringify(appData));
+      }
+    }
+
+    // ================================================================
+    //  NAVIGATION & RENDER
+    // ================================================================
+
+    let currentPage = 'home';
+    let currentSubject = null;
+    let currentChapter = null;
+    let adminLoggedIn = false;
+    let currentLang = 'en'; // 'en' or 'hi'
+
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => document.querySelectorAll(sel);
+    const pages = {
+      home: $('#page-home'),
+      subject: $('#page-subject'),
+      chapter: $('#page-chapter'),
+      admin: $('#page-admin'),
+    };
+    const navLinks = $$('.app-header .nav-links a');
+
+    function showToast(msg, type = 'info', duration = 3500) {
+      const container = $('#toastContainer');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<span>${msg}</span><button class="close">&times;</button>`;
+      t.querySelector('.close').addEventListener('click', () => t.remove());
+      container.appendChild(t);
+      setTimeout(() => { if (t.parentNode) t.remove(); }, duration);
+    }
+
+    function navigateTo(page, data) {
+      Object.values(pages).forEach(el => el.classList.remove('active'));
+      const target = pages[page];
+      if (target) target.classList.add('active');
+      navLinks.forEach(link => link.classList.toggle('active', link.dataset.page === page));
+      currentPage = page;
+      if (page === 'home') renderHome();
+      else if (page === 'subject') renderSubject(data);
+      else if (page === 'chapter') renderChapter(data);
+      else if (page === 'admin') renderAdmin();
+    }
+
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateTo(link.dataset.page);
+      });
+    });
+
+    // ================================================================
+    //  RENDER: HOME
+    // ================================================================
+
+    function renderHome() {
+      const grid = $('#subjectGrid');
+      grid.innerHTML = '';
+      for (const [key, subj] of Object.entries(appData.subjects)) {
+        const count = subj.chapters ? subj.chapters.length : 0;
+        const card = document.createElement('div');
+        card.className = 'subject-card';
+        card.dataset.subject = key;
+        card.innerHTML = `
+          <span class="icon">${subj.icon}</span>
+          <div class="name">${subj.name}</div>
+          <div class="count">${count} chapters</div>
+          <span class="badge">${count > 0 ? '📖 Explore' : '📝 Coming soon'}</span>
+        `;
+        card.addEventListener('click', () => {
+          currentSubject = key;
+          navigateTo('subject', key);
+        });
+        grid.appendChild(card);
+      }
+      updateLangUI();
+    }
+
+    // ================================================================
+    //  RENDER: SUBJECT
+    // ================================================================
+
+    function renderSubject(subjectKey) {
+      const subj = appData.subjects[subjectKey];
+      if (!subj) { showToast('Subject not found!', 'error'); navigateTo('home'); return; }
+      $('#subjIcon').textContent = subj.icon;
+      $('#subjTitle').textContent = subj.name;
+      const list = $('#chapterList');
+      list.innerHTML = '';
+      if (!subj.chapters || subj.chapters.length === 0) {
+        list.innerHTML = `<div class="empty-state"><span class="icon">📭</span><p>No chapters added yet. <br>Go to <strong>Admin</strong> to add chapters.</p></div>`;
+      } else {
+        subj.chapters.forEach((ch, idx) => {
+          const item = document.createElement('div');
+          item.className = 'chapter-item';
+          const title = currentLang === 'hi' ? (ch.titleHi || ch.title) : ch.title;
+          const summary = currentLang === 'hi' ? (ch.summaryHi || ch.summary) : ch.summary;
+          item.innerHTML = `
+            <span class="num">Chapter ${idx+1}</span>
+            <h3>${title}</h3>
+            <p>${summary || 'Learn more.'}</p>
+            <div class="meta"><span class="status pending">📖 Start</span><span class="dot"></span><span>${ch.mcqs ? ch.mcqs.length : 0} MCQs</span></div>
+          `;
+          item.addEventListener('click', () => {
+            currentChapter = { subjectKey, chapterIndex: idx };
+            navigateTo('chapter', { subjectKey, chapterIndex: idx });
+          });
+          list.appendChild(item);
+        });
+      }
+      $('#subjBack').onclick = () => navigateTo('home');
+      updateLangUI();
+    }
+
+    // ================================================================
+    //  RENDER: CHAPTER (with tabs)
+    // ================================================================
+
+    function renderChapter(data) {
+      const { subjectKey, chapterIndex } = data;
+      const subj = appData.subjects[subjectKey];
+      if (!subj || !subj.chapters || chapterIndex >= subj.chapters.length) {
+        showToast('Chapter not found!', 'error');
+        navigateTo('home');
+        return;
+      }
+      const ch = subj.chapters[chapterIndex];
+      const container = $('#chapterView');
+      const num = chapterIndex + 1;
+      const title = currentLang === 'hi' ? (ch.titleHi || ch.title) : ch.title;
+
+      let html = `
+        <div class="ch-header">
+          <div class="info">
+            <span class="num">Chapter ${num} · ${subj.icon} ${subj.name}</span>
+            <h2>${title}</h2>
+          </div>
+          <button class="back-btn" id="chBack">← Back</button>
+        </div>
+        <div class="ch-tabs" id="chTabs">
+          <button class="active" data-tab="learn">📖 Learn</button>
+          <button data-tab="practice">✏️ Practice</button>
+          <button data-tab="quiz">🎯 Quiz</button>
+          <button data-tab="qa">💬 Q&A</button>
+        </div>
+        <div class="ch-body" id="chBody">
+          <div class="tab-pane active" id="tab-learn">${ch.content || '<p>No content available.</p>'}</div>
+          <div class="tab-pane" id="tab-practice"></div>
+          <div class="tab-pane" id="tab-quiz"></div>
+          <div class="tab-pane" id="tab-qa"></div>
+        </div>
+      `;
+      container.innerHTML = html;
+
+      $('#chBack').onclick = () => navigateTo('subject', subjectKey);
+
+      const tabs = container.querySelectorAll('.ch-tabs button');
+      const panes = {
+        learn: container.querySelector('#tab-learn'),
+        practice: container.querySelector('#tab-practice'),
+        quiz: container.querySelector('#tab-quiz'),
+        qa: container.querySelector('#tab-qa'),
+      };
+
+      tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabs.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const tab = btn.dataset.tab;
+          Object.values(panes).forEach(p => p.classList.remove('active'));
+          if (panes[tab]) panes[tab].classList.add('active');
+          if (tab === 'practice') renderPracticeTab(ch, panes.practice);
+          if (tab === 'quiz') renderQuizTab(ch, panes.quiz);
+          if (tab === 'qa') renderQATab(ch, panes.qa);
+        });
+      });
+
+      // Initial render of non-learn tabs
+      renderPracticeTab(ch, panes.practice);
+      renderQuizTab(ch, panes.quiz);
+      renderQATab(ch, panes.qa);
+      updateLangUI();
+    }
+
+    // ----- Practice Tab -----
+    function renderPracticeTab(ch, container) {
+      if (!container) return;
+      let html = `
+        <div class="score-banner"><span class="score-label">📊 Practice Score</span><span class="score-num" id="practiceScore">0%</span></div>
+      `;
+      if (ch.mcqs && ch.mcqs.length) {
+        html += `<h4 style="margin-bottom:12px;">📝 Multiple Choice Questions</h4>`;
+        ch.mcqs.forEach((mcq, idx) => {
+          const qText = currentLang === 'hi' ? (mcq.qHi || mcq.q) : mcq.q;
+          html += `
+            <div class="question-item" data-mcq="${idx}">
+              <div class="q-text">${idx+1}. ${qText}</div>
+              <div class="options">
+                ${mcq.opts.map((opt, oi) => `
+                  <label><input type="radio" name="mcq_${idx}" value="${oi}" data-mcq-idx="${idx}"> ${opt}</label>
+                `).join('')}
+              </div>
+              <div class="result-badge pending" id="mcqResult_${idx}">⬜ Not attempted</div>
+            </div>
+          `;
+        });
+      }
+      if (ch.fills && ch.fills.length) {
+        html += `<h4 style="margin:20px 0 12px;">✍️ Fill in the Blanks</h4>`;
+        ch.fills.forEach((fill, idx) => {
+          const qText = currentLang === 'hi' ? (fill.qHi || fill.q) : fill.q;
+          html += `
+            <div class="fill-item" data-fill="${idx}">
+              <div class="q-text">${qText}</div>
+              <input type="text" placeholder="Type answer..." data-fill-idx="${idx}" />
+              <div class="fill-result" id="fillResult_${idx}"></div>
+            </div>
+          `;
+        });
+      }
+      html += `<div class="btn-group"><button class="btn-primary" id="checkPractice">✅ Check Answers</button><button class="btn-secondary" id="resetPractice">🔄 Reset</button></div>`;
+      container.innerHTML = html;
+
+      // Auto-check on radio change
+      container.querySelectorAll('input[type="radio"]').forEach(el => {
+        el.addEventListener('change', () => {
+          const idx = parseInt(el.dataset.mcqIdx);
+          const mcq = ch.mcqs[idx];
+          const result = container.querySelector(`#mcqResult_${idx}`);
+          if (result) {
+            const selected = parseInt(el.value);
+            result.className = `result-badge ${selected === mcq.ans ? 'correct' : 'wrong'}`;
+            result.textContent = selected === mcq.ans ? '✅ Correct!' : '❌ Wrong!';
+          }
+          updatePracticeScore(ch, container);
+        });
+      });
+
+      container.querySelectorAll('.fill-item input').forEach(inp => {
+        inp.addEventListener('blur', () => {
+          const idx = parseInt(inp.dataset.fillIdx);
+          const fill = ch.fills[idx];
+          const result = container.querySelector(`#fillResult_${idx}`);
+          if (result) {
+            if (inp.value.trim().toLowerCase() === fill.ans.toLowerCase()) {
+              result.innerHTML = `✅ Correct! <span class="ans">${fill.ans}</span>`;
+              result.style.color = '#16a34a';
+            } else if (inp.value.trim()) {
+              result.innerHTML = `❌ Try again. Hint: <span class="wrong-ans">${fill.ans}</span>`;
+              result.style.color = '#dc2626';
+            } else {
+              result.innerHTML = '';
+            }
+          }
+          updatePracticeScore(ch, container);
+        });
+      });
+
+      container.querySelector('#checkPractice')?.addEventListener('click', () => {
+        container.querySelectorAll('.fill-item input').forEach(inp => inp.dispatchEvent(new Event('blur')));
+        container.querySelectorAll('input[type="radio"]:checked').forEach(el => el.dispatchEvent(new Event('change')));
+        ch.mcqs.forEach((mcq, idx) => {
+          const result = container.querySelector(`#mcqResult_${idx}`);
+          const checked = container.querySelector(`input[name="mcq_${idx}"]:checked`);
+          if (!checked && result) {
+            result.className = 'result-badge wrong';
+            result.textContent = '❌ Not attempted!';
+          }
+        });
+        updatePracticeScore(ch, container);
+        showToast('✅ Practice checked!', 'success');
+      });
+
+      container.querySelector('#resetPractice')?.addEventListener('click', () => {
+        container.querySelectorAll('input[type="radio"]').forEach(el => {
+          el.checked = false;
+          const idx = parseInt(el.dataset.mcqIdx);
+          const result = container.querySelector(`#mcqResult_${idx}`);
+          if (result) { result.className = 'result-badge pending';
+            result.textContent = '⬜ Not attempted'; }
+        });
+        container.querySelectorAll('.fill-item input').forEach(inp => {
+          inp.value = '';
+          const idx = parseInt(inp.dataset.fillIdx);
+          const result = container.querySelector(`#fillResult_${idx}`);
+          if (result) result.innerHTML = '';
+        });
+        updatePracticeScore(ch, container);
+        showToast('🔄 Reset complete!', 'info');
+      });
+    }
+
+    function updatePracticeScore(ch, container) {
+      const mcqItems = container.querySelectorAll('.question-item');
+      let correct = 0;
+      let total = ch.mcqs ? ch.mcqs.length : 0;
+      mcqItems.forEach((item, idx) => {
+        const result = container.querySelector(`#mcqResult_${idx}`);
+        if (result && result.classList.contains('correct')) correct++;
+      });
+      const fillItems = container.querySelectorAll('.fill-item');
+      let fillCorrect = 0;
+      fillItems.forEach((item, idx) => {
+        const result = container.querySelector(`#fillResult_${idx}`);
+        if (result && result.innerHTML.includes('✅')) fillCorrect++;
+      });
+      const totalFills = ch.fills ? ch.fills.length : 0;
+      const totalQ = total + totalFills;
+      const totalCorrect = correct + fillCorrect;
+      const score = totalQ > 0 ? Math.round((totalCorrect / totalQ) * 100) : 0;
+      const scoreEl = container.querySelector('#practiceScore');
+      if (scoreEl) scoreEl.textContent = score + '%';
+    }
+
+    // ----- Quiz Tab -----
+    let quizState = { questions: [], current: 0, score: 0, answered: false };
+
+    function renderQuizTab(ch, container) {
+      if (!container) return;
+      const shuffled = ch.mcqs ? shuffleArray([...ch.mcqs]) : [];
+      const selected = shuffled.slice(0, Math.min(5, shuffled.length));
+      quizState.questions = selected;
+      quizState.current = 0;
+      quizState.score = 0;
+      quizState.answered = false;
+
+      let html = `
+        <div class="score-banner"><span class="score-label">🎯 Quiz Score</span><span class="score-num" id="quizScore">0 / ${selected.length}</span></div>
+        <div id="quizContainer"></div>
+        <div class="btn-group"><button class="btn-success" id="nextQuiz">Next →</button><button class="btn-secondary" id="resetQuiz">🔄 Restart Quiz</button></div>
+      `;
+      container.innerHTML = html;
+      renderQuizQuestion(0, container);
+
+      container.querySelector('#nextQuiz')?.addEventListener('click', () => {
+        if (!quizState.answered) { showToast('⚠️ Please answer the question first!', 'error'); return; }
+        if (quizState.current < quizState.questions.length - 1) {
+          quizState.current++;
+          renderQuizQuestion(quizState.current, container);
+        } else {
+          showToast('🎉 Quiz complete! Score: ' + quizState.score + '/' + quizState.questions.length, 'success');
+          container.querySelector('#nextQuiz').disabled = true;
+        }
+      });
+
+      container.querySelector('#resetQuiz')?.addEventListener('click', () => {
+        renderQuizTab(ch, container);
+        showToast('🔄 Quiz restarted!', 'info');
+      });
+    }
+
+    function renderQuizQuestion(idx, container) {
+      const qs = quizState.questions;
+      if (idx >= qs.length) {
+        const qc = container.querySelector('#quizContainer');
+        if (qc) qc.innerHTML = `<div style="padding:30px;text-align:center;font-size:20px;font-weight:700;color:#16a34a;">🎉 Quiz Complete! Score: ${quizState.score}/${qs.length}</div>`;
+        return;
+      }
+      const q = qs[idx];
+      const qText = currentLang === 'hi' ? (q.qHi || q.q) : q.q;
+      quizState.answered = false;
+      let html = `
+        <div class="question-item" style="background:#fff;border:2px solid #2563eb;">
+          <div class="q-text" style="font-size:18px;">${idx+1}. ${qText}</div>
+          <div class="options">
+            ${q.opts.map((opt, oi) => `<label><input type="radio" name="quiz_q" value="${oi}" data-quiz-idx="${idx}"> ${opt}</label>`).join('')}
+          </div>
+          <div id="quizFeedback" style="margin-top:8px;font-weight:600;font-size:15px;"></div>
+        </div>
+      `;
+      const qc = container.querySelector('#quizContainer');
+      if (qc) qc.innerHTML = html;
+
+      qc?.querySelectorAll('input[type="radio"]').forEach(el => {
+        el.addEventListener('change', () => {
+          if (quizState.answered) return;
+          const selected = parseInt(el.value);
+          const isCorrect = selected === q.ans;
+          quizState.answered = true;
+          if (isCorrect) quizState.score++;
+          const fb = qc.querySelector('#quizFeedback');
+          if (fb) {
+            fb.textContent = isCorrect ? '✅ Correct!' : '❌ Wrong. Answer: ' + q.opts[q.ans];
+            fb.style.color = isCorrect ? '#16a34a' : '#dc2626';
+          }
+          qc.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+          const scoreEl = container.querySelector('#quizScore');
+          if (scoreEl) scoreEl.textContent = `${quizState.score} / ${quizState.questions.length}`;
+          const nextBtn = container.querySelector('#nextQuiz');
+          if (nextBtn) nextBtn.disabled = false;
+        });
+      });
+      const nextBtn = container.querySelector('#nextQuiz');
+      if (nextBtn) nextBtn.disabled = true;
+      const scoreEl = container.querySelector('#quizScore');
+      if (scoreEl) scoreEl.textContent = `${quizState.score} / ${quizState.questions.length}`;
+    }
+
+    // ----- Q&A Tab -----
+    function renderQATab(ch, container) {
+      if (!container) return;
+      let html = `<h4 style="margin-bottom:12px;">💬 Questions & Answers</h4>`;
+      if (ch.qa && ch.qa.length) {
+        ch.qa.forEach((qa, idx) => {
+          const qText = currentLang === 'hi' ? (qa.qHi || qa.q) : qa.q;
+          html += `<div class="qa-item"><div class="q">❓ ${qText}</div><div class="a"><span class="label">💡 Answer:</span> ${qa.a}</div></div>`;
+        });
+      } else {
+        html += `<p style="color:var(--gray-500);">No Q&A available.</p>`;
+      }
+      container.innerHTML = html;
+    }
+
+    // ================================================================
+    //  ADMIN PANEL
+    // ================================================================
+
+    const ADMIN_PASSWORD = 'admin123';
+
+    function renderAdmin() {
+      const container = $('#adminContent');
+      if (!adminLoggedIn) {
+        container.innerHTML = `
+          <div class="admin-login">
+            <h2>🔐 Admin Login</h2>
+            <p>Enter password to manage chapters</p>
+            <label>Password</label>
+            <input type="password" id="adminPass" placeholder="Enter password..." />
+            <div class="error" id="loginError">Incorrect password. Try again.</div>
+            <button class="btn-primary w-full" id="adminLoginBtn">Login</button>
+          </div>
+        `;
+        const loginBtn = container.querySelector('#adminLoginBtn');
+        const passInput = container.querySelector('#adminPass');
+        const errorEl = container.querySelector('#loginError');
+        errorEl.style.display = 'none';
+
+        const doLogin = () => {
+          if (passInput.value === ADMIN_PASSWORD) {
+            adminLoggedIn = true;
+            renderAdmin();
+            showToast('✅ Logged in as Admin', 'success');
+          } else {
+            errorEl.style.display = 'block';
+            passInput.value = '';
+            passInput.focus();
+          }
+        };
+        loginBtn.addEventListener('click', doLogin);
+        passInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+        return;
+      }
+
+      // Logged in
+      container.innerHTML = `
+        <div class="admin-panel">
+          <div class="admin-header">
+            <h2>🛠️ Admin Panel</h2>
+            <div>
+              <button class="btn-secondary" id="adminLogout">🚪 Logout</button>
+              <button class="btn-primary" id="adminAddBtn">➕ Add Chapter</button>
+            </div>
+          </div>
+          <div class="admin-body">
+            <div class="filters">
+              <select id="adminSubjectFilter">
+                <option value="all">All Subjects</option>
+                ${Object.values(appData.subjects).map(s => `<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
+              </select>
+              <input type="text" id="adminSearch" placeholder="Search chapters..." />
+            </div>
+            <div id="adminChapterList" class="admin-chapter-list"></div>
+            <div id="adminForm" class="admin-form"></div>
+          </div>
+        </div>
+      `;
+
+      container.querySelector('#adminLogout').addEventListener('click', () => {
+        adminLoggedIn = false;
+        renderAdmin();
+        showToast('👋 Logged out', 'info');
+      });
+
+      container.querySelector('#adminAddBtn').addEventListener('click', () => {
+        showAdminForm(null);
+      });
+
+      const filter = container.querySelector('#adminSubjectFilter');
+      const search = container.querySelector('#adminSearch');
+      filter.addEventListener('change', renderAdminList);
+      search.addEventListener('input', renderAdminList);
+
+      renderAdminList();
+
+      function renderAdminList() {
+        const list = container.querySelector('#adminChapterList');
+        const filterVal = filter.value;
+        const searchVal = search.value.toLowerCase().trim();
+
+        let items = [];
+        for (const [key, subj] of Object.entries(appData.subjects)) {
+          if (filterVal !== 'all' && filterVal !== key) continue;
+          if (subj.chapters) {
+            subj.chapters.forEach((ch, idx) => {
+              const title = ch.title || 'Untitled';
+              if (searchVal && !title.toLowerCase().includes(searchVal)) return;
+              items.push({ subjectKey: key, subjectName: subj.name, subjectIcon: subj.icon, chapterIndex: idx,
+                chapter: ch });
+            });
+          }
+        }
+
+        if (items.length === 0) {
+          list.innerHTML = `<div class="empty-state"><span class="icon">📭</span><p>No chapters found.</p></div>`;
+          return;
+        }
+
+        list.innerHTML = items.map(item => `
+          <div class="admin-chapter-item">
+            <div class="info">
+              <span class="subject-badge">${item.subjectIcon} ${item.subjectName}</span>
+              <span class="title">${item.chapter.title || 'Untitled'}</span>
+              <span style="font-size:13px;color:var(--gray-500);">Ch. ${item.chapterIndex+1}</span>
+            </div>
+            <div class="actions">
+              <button class="edit-btn" data-key="${item.subjectKey}" data-idx="${item.chapterIndex}">✏️ Edit</button>
+              <button class="del-btn" data-key="${item.subjectKey}" data-idx="${item.chapterIndex}">🗑️ Delete</button>
+            </div>
+          </div>
+        `).join('');
+
+        list.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const key = btn.dataset.key;
+            const idx = parseInt(btn.dataset.idx);
+            const ch = appData.subjects[key]?.chapters?.[idx];
+            if (ch) showAdminForm({ subjectKey: key, chapterIndex: idx, chapter: ch });
+          });
+        });
+
+        list.querySelectorAll('.del-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const key = btn.dataset.key;
+            const idx = parseInt(btn.dataset.idx);
+            if (confirm(`Delete "${appData.subjects[key]?.chapters?.[idx]?.title || 'chapter'}"?`)) {
+              appData.subjects[key].chapters.splice(idx, 1);
+              await saveAppData();
+              renderAdminList();
+              showToast('🗑️ Chapter deleted!', 'success');
+            }
+          });
+        });
+      }
+
+      function showAdminForm(editData) {
+        const form = container.querySelector('#adminForm');
+        const isEdit = !!editData;
+
+        let subjectOptions = Object.values(appData.subjects).map(s =>
+          `<option value="${s.id}" ${isEdit && s.id === editData.subjectKey ? 'selected' : ''}>${s.icon} ${s.name}</option>`
+        ).join('');
+
+        form.innerHTML = `
+          <h3>${isEdit ? '✏️ Edit Chapter' : '➕ Add New Chapter'}</h3>
+          <div class="form-group"><label>Subject</label><select id="afSubject">${subjectOptions}</select></div>
+          <div class="form-row">
+            <div class="form-group"><label>Title (English)</label><input type="text" id="afTitle" value="${isEdit ? editData.chapter.title || '' : ''}" placeholder="e.g. Food, Health and Hygiene" /></div>
+            <div class="form-group"><label>Title (Hindi)</label><input type="text" id="afTitleHi" value="${isEdit ? editData.chapter.titleHi || '' : ''}" placeholder="e.g. भोजन, स्वास्थ्य और स्वच्छता" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Summary (English)</label><input type="text" id="afSummary" value="${isEdit ? editData.chapter.summary || '' : ''}" placeholder="Short summary in English" /></div>
+            <div class="form-group"><label>Summary (Hindi)</label><input type="text" id="afSummaryHi" value="${isEdit ? editData.chapter.summaryHi || '' : ''}" placeholder="Short summary in Hindi" /></div>
+          </div>
+          <div class="form-group"><label>Content (HTML)</label><textarea id="afContent" rows="8" placeholder="Paste HTML content here...">${isEdit ? editData.chapter.content || '' : ''}</textarea></div>
+          <div class="form-group"><label>MCQs (JSON array)</label><textarea id="afMcqs" rows="4" placeholder='[{"q":"Question?","opts":["A","B","C","D"],"ans":0}]'>${isEdit ? JSON.stringify(editData.chapter.mcqs || [], null, 2) : ''}</textarea></div>
+          <div class="form-group"><label>Fill in the Blanks (JSON array)</label><textarea id="afFills" rows="3" placeholder='[{"q":"Text with ______","ans":"answer"}]'>${isEdit ? JSON.stringify(editData.chapter.fills || [], null, 2) : ''}</textarea></div>
+          <div class="form-group"><label>Q&A (JSON array)</label><textarea id="afQa" rows="3" placeholder='[{"q":"Question?","a":"Answer."}]'>${isEdit ? JSON.stringify(editData.chapter.qa || [], null, 2) : ''}</textarea></div>
+          <div class="form-actions">
+            <button class="btn-success" id="afSave">💾 Save Chapter</button>
+            <button class="btn-secondary" id="afCancel">Cancel</button>
+          </div>
+        `;
+
+        form.classList.add('active');
+
+        form.querySelector('#afCancel').addEventListener('click', () => {
+          form.classList.remove('active');
+        });
+
+        form.querySelector('#afSave').addEventListener('click', async () => {
+          try {
+            const subjectKey = form.querySelector('#afSubject').value;
+            const title = form.querySelector('#afTitle').value.trim();
+            const titleHi = form.querySelector('#afTitleHi').value.trim();
+            const summary = form.querySelector('#afSummary').value.trim();
+            const summaryHi = form.querySelector('#afSummaryHi').value.trim();
+            const content = form.querySelector('#afContent').value.trim();
+            const mcqsRaw = form.querySelector('#afMcqs').value.trim();
+            const fillsRaw = form.querySelector('#afFills').value.trim();
+            const qaRaw = form.querySelector('#afQa').value.trim();
+
+            if (!title) { showToast('⚠️ Please enter a chapter title.', 'error'); return; }
+
+            const mcqs = mcqsRaw ? JSON.parse(mcqsRaw) : [];
+            const fills = fillsRaw ? JSON.parse(fillsRaw) : [];
+            const qa = qaRaw ? JSON.parse(qaRaw) : [];
+
+            const chapterData = {
+              id: isEdit ? editData.chapter.id : Date.now(),
+              title,
+              titleHi: titleHi || title,
+              summary: summary || '',
+              summaryHi: summaryHi || summary || '',
+              content: content || '<p>No content provided.</p>',
+              mcqs,
+              fills,
+              qa
+            };
+
+            if (isEdit) {
+              appData.subjects[subjectKey].chapters[editData.chapterIndex] = chapterData;
+            } else {
+              if (!appData.subjects[subjectKey].chapters) appData.subjects[subjectKey].chapters = [];
+              appData.subjects[subjectKey].chapters.push(chapterData);
+            }
+
+            await saveAppData();
+            form.classList.remove('active');
+            renderAdminList();
+            showToast(`✅ Chapter "${title}" ${isEdit ? 'updated' : 'added'}!`, 'success');
+          } catch (e) {
+            showToast('❌ Error: ' + e.message, 'error');
+          }
+        });
+      }
+    }
+
+    // ================================================================
+    //  LANGUAGE TOGGLE
+    // ================================================================
+
+    document.getElementById('langToggle').addEventListener('click', function() {
+      currentLang = currentLang === 'en' ? 'hi' : 'en';
+      this.textContent = currentLang === 'en' ? '🌐 English' : '🌐 हिंदी';
+      // Update hero description
+      document.getElementById('heroDesc').textContent = currentLang === 'en' ?
+        'Explore Class 5 subjects with fun chapters, quizzes, and activities!' :
+        'कक्षा 5 के विषयों को मज़ेदार अध्याय, क्विज़ और गतिविधियों के साथ एक्सप्लोर करें!';
+      // Re-render current page
+      if (currentPage === 'home') renderHome();
+      else if (currentPage === 'subject' && currentSubject) renderSubject(currentSubject);
+      else if (currentPage === 'chapter' && currentChapter) renderChapter(currentChapter);
+      else if (currentPage === 'admin') renderAdmin();
+      showToast(currentLang === 'en' ? '🌍 Switched to English' : '🌍 हिंदी में बदला गया', 'info', 1500);
+    });
+
+    // ================================================================
+    //  UTILITY
+    // ================================================================
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function updateLangUI() {
+      // can be extended
+    }
+
+    // ================================================================
+    //  INIT
+    // ================================================================
+
+    // If Firebase not ready, fallback to localStorage load
+    if (!fb) {
+      loadFromLocalStorage();
+      renderHome();
+    } else {
+      // wait for auth
+      // The load is triggered in auth callback
+    }
+
+    // Also ensure data exists if localStorage fallback
+    window.addEventListener('load', () => {
+      if (!appData) {
+        loadFromLocalStorage();
+        renderHome();
+      }
+    });
+
+    console.log('🚀 SmartCampus AI with Firebase ready!');
+    console.log('🔐 Admin password: admin123');
+  </script>
+</body>
+</html>
