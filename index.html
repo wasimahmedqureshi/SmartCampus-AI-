@@ -1,1201 +1,1960 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartCampus AI — Class 5 Learning Portal</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5" />
+<meta name="theme-color" content="#0f172a" />
+<title>SmartCampus AI — Class 1–10 AI Learning Platform</title>
 
-  <!-- Firebase SDK (imported as modules) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+<style>
+:root{
+  --primary:#2563eb;--primary-light:#3b82f6;--primary-dark:#1e40af;
+  --accent:#f59e0b;--success:#22c55e;--danger:#ef4444;
+  --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;
+  --gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;
+  --gray-800:#1e293b;--gray-900:#0f172a;
+  --radius:16px;--shadow:0 4px 24px rgba(15,23,42,.06);
+  --shadow-lg:0 12px 48px rgba(15,23,42,.14);
+  --transition:.25s cubic-bezier(.4,0,.2,1);
+  --header-h:64px;--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--gray-50);color:var(--gray-800);line-height:1.55;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:none;background:none;font-family:inherit;font-size:inherit;color:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit;outline:none}
+img{max-width:100%;display:block}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:8px}
+.hidden{display:none!important}
+.text-center{text-align:center}.mt-8{margin-top:8px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}
+.w-full{width:100%}.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}
+.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.muted{color:var(--gray-500);font-size:14px}
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDBYiMVATYiffsYFKFqyuiIftG53GWZnXQ",
-      authDomain: "smartcampus-ac3cc.firebaseapp.com",
-      projectId: "smartcampus-ac3cc",
-      storageBucket: "smartcampus-ac3cc.firebasestorage.app",
-      messagingSenderId: "741878301871",
-      appId: "1:741878301871:web:5b74cc5d9924d17caf805a",
-      measurementId: "G-MJ1HZGQX1K"
-    };
+#loader{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e293b);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#fff;transition:opacity .4s ease}
+#loader.done{opacity:0;pointer-events:none}
+#loader .brand{font-size:34px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+#loader .brand span{color:var(--accent)}
+#loader .tag{font-size:14px;color:#cbd5e1;margin-bottom:24px}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+.app-header{position:sticky;top:0;z-index:80;height:var(--header-h);background:rgba(15,23,42,.96);backdrop-filter:blur(14px);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 max(16px,3vw);gap:12px;box-shadow:0 1px 0 rgba(255,255,255,.06)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.4px}
+.logo .icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),var(--primary-dark));font-size:19px;box-shadow:0 4px 14px rgba(37,99,235,.4)}
+.logo .name span{color:var(--accent)}
+.header-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff;font-size:17px;transition:var(--transition)}
+.icon-btn:hover{background:rgba(255,255,255,.16)}
+.lang-btn{padding:7px 14px;border-radius:20px;background:rgba(255,255,255,.1);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.14);transition:var(--transition)}
+.lang-btn:hover{background:rgba(255,255,255,.2)}
+.user-chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:20px;background:rgba(255,255,255,.08);font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition)}
+.user-chip .avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#0f172a;display:grid;place-items:center;font-weight:800;font-size:12px}
 
-    // Make auth and db globally available
-    window.__firebase = { auth, db, signInAnonymously, onAuthStateChanged, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, collection, query, where, getDocs, deleteDoc };
-    console.log("🔥 Firebase initialized!");
-  </script>
+.app-main{max-width:1180px;margin:0 auto;padding:24px max(16px,3vw) 120px}
+.page{display:none;animation:fadeUp .35s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-  <style>
-    /* ===== RESET & VARIABLES (same as before) ===== */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    :root {
-      --primary: #2563eb; --primary-light: #3b82f6; --primary-dark: #1e40af;
-      --secondary: #f59e0b; --success: #22c55e; --danger: #ef4444;
-      --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
-      --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
-      --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
-      --radius: 16px; --shadow: 0 4px 24px rgba(0,0,0,0.08); --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
-      --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4f8; color: var(--gray-800); line-height:1.6; min-height:100vh; }
-    a { text-decoration:none; color:inherit; }
-    button { cursor:pointer; border:none; outline:none; font-family:inherit; font-size:inherit; }
-    input, textarea, select { font-family:inherit; font-size:inherit; }
+.hero{background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 65%,#6366f1 100%);border-radius:20px;padding:44px 36px;color:#fff;margin-bottom:28px;position:relative;overflow:hidden;box-shadow:0 16px 44px rgba(37,99,235,.28)}
+.hero::before{content:'';position:absolute;top:-40%;right:-10%;width:340px;height:340px;background:radial-gradient(circle,rgba(245,158,11,.28),transparent 70%);border-radius:50%}
+.hero-inner{position:relative;z-index:1;max-width:720px}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,.14);font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:12px;border:1px solid rgba(255,255,255,.18)}
+.hero h1{font-size:clamp(24px,4vw,36px);font-weight:800;line-height:1.15;letter-spacing:-.6px}
+.hero h1 span{color:var(--accent)}
+.hero p{font-size:clamp(14px,1.6vw,17px);opacity:.94;margin-top:10px;max-width:600px}
+.hero-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
 
-    /* scrollbar */
-    ::-webkit-scrollbar { width:6px; height:6px; }
-    ::-webkit-scrollbar-track { background: var(--gray-100); }
-    ::-webkit-scrollbar-thumb { background: var(--primary); border-radius:8px; }
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:12px;font-weight:600;font-size:14px;transition:var(--transition);cursor:pointer;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 6px 18px rgba(37,99,235,.28)}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn-accent{background:var(--accent);color:#0f172a;box-shadow:0 6px 18px rgba(245,158,11,.3)}
+.btn-ghost{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.24)}
+.btn-ghost:hover{background:rgba(255,255,255,.24)}
+.btn-secondary{background:var(--gray-100);color:var(--gray-700)}
+.btn-secondary:hover{background:var(--gray-200)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:#fee2e2;color:var(--danger)}
+.btn-danger:hover{background:#fecaca}
+.btn-sm{padding:7px 14px;font-size:13px;border-radius:9px}
+.btn-lg{padding:14px 28px;font-size:15px;border-radius:14px}
 
-    /* toast */
-    .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; max-width:400px; width:100%; }
-    .toast { background: var(--gray-900); color:#fff; padding:14px 20px; border-radius:12px; box-shadow:var(--shadow-lg); font-size:15px; font-weight:500; display:flex; align-items:center; justify-content:space-between; gap:12px; animation:slideIn 0.4s ease; }
-    .toast .close { background:none; color:var(--gray-400); font-size:20px; line-height:1; padding:0 4px; }
-    .toast.success { border-left:4px solid var(--success); }
-    .toast.error { border-left:4px solid var(--danger); }
-    .toast.info { border-left:4px solid var(--primary); }
-    @keyframes slideIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.section-head h2{font-size:clamp(18px,2.2vw,22px);font-weight:800;letter-spacing:-.3px}
+.section-head .sub{font-size:13px;color:var(--gray-500);font-weight:500}
 
-    /* header */
-    .app-header { background: var(--gray-900); color:#fff; padding:12px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.3); }
-    .app-header .logo { display:flex; align-items:center; gap:10px; font-size:22px; font-weight:800; letter-spacing:-0.5px; }
-    .app-header .logo .icon { background:var(--primary); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; }
-    .app-header .logo span { color:var(--secondary); }
-    .app-header .nav-links { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .app-header .nav-links a { padding:6px 16px; border-radius:30px; font-size:14px; font-weight:600; transition:var(--transition); background:rgba(255,255,255,0.06); color:var(--gray-300); }
-    .app-header .nav-links a:hover, .app-header .nav-links a.active { background:rgba(255,255,255,0.14); color:#fff; }
-    .app-header .nav-links a.admin-link { background:rgba(239,68,68,0.2); color:#fca5a5; }
-    .app-header .nav-links a.admin-link:hover { background:rgba(239,68,68,0.35); color:#fff; }
-    .app-header .lang-toggle { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.class-card{background:#fff;border-radius:var(--radius);padding:20px 16px;text-align:center;border:1px solid var(--gray-200);box-shadow:var(--shadow);cursor:pointer;transition:var(--transition)}
+.class-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:var(--primary-light)}
+.class-card .grade{font-size:32px;font-weight:800;line-height:1;letter-spacing:-1px;background:linear-gradient(135deg,var(--primary),#6366f1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.class-card .grade-label{font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.class-card .subjects{font-size:12px;color:var(--gray-500);margin-top:10px;font-weight:500}
 
-    /* main */
-    .app-main { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
-    .page { display:none; animation:fadeUp 0.4s ease; }
-    .page.active { display:block; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.subject-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.subject-card{background:#fff;border-radius:var(--radius);padding:22px 16px;text-align:center;border:1px solid var(--gray-200);box-shadow:var(--shadow);cursor:pointer;transition:var(--transition)}
+.subject-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:var(--primary-light)}
+.subject-card .icon{font-size:40px;margin-bottom:8px;display:block}
+.subject-card .name{font-size:15px;font-weight:700;line-height:1.25}
+.subject-card .count{font-size:12px;color:var(--gray-500);margin-top:4px}
 
-    /* home */
-    .hero { background:linear-gradient(135deg, var(--primary-dark), var(--primary)); border-radius:var(--radius); padding:36px 32px; color:#fff; margin-bottom:32px; box-shadow:0 8px 30px rgba(37,99,235,0.3); position:relative; overflow:hidden; }
-    .hero::after { content:'✨'; position:absolute; top:-20px; right:20px; font-size:120px; opacity:0.1; }
-    .hero h1 { font-size:32px; font-weight:800; }
-    .hero h1 span { color:var(--secondary); }
-    .hero p { font-size:18px; opacity:0.9; margin-top:4px; }
-    .subject-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:18px; margin-top:8px; }
-    .subject-card { background:#fff; border-radius:var(--radius); padding:24px 20px 20px; box-shadow:var(--shadow); border:1px solid var(--gray-200); transition:var(--transition); cursor:pointer; text-align:center; }
-    .subject-card:hover { transform:translateY(-6px); box-shadow:var(--shadow-lg); border-color:var(--primary-light); }
-    .subject-card .icon { font-size:44px; display:block; margin-bottom:6px; }
-    .subject-card .name { font-size:18px; font-weight:700; }
-    .subject-card .count { font-size:13px; color:var(--gray-500); margin-top:2px; }
-    .subject-card .badge { display:inline-block; margin-top:8px; padding:2px 14px; border-radius:20px; font-size:12px; font-weight:600; background:var(--gray-100); color:var(--gray-600); }
+.chapter-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.chapter-card{background:#fff;border-radius:var(--radius);padding:18px 20px;border:1px solid var(--gray-200);box-shadow:var(--shadow);cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;min-height:150px}
+.chapter-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--primary-light)}
+.chapter-card .tag{align-self:flex-start;font-size:11px;font-weight:700;color:var(--primary);background:#eef4ff;padding:2px 10px;border-radius:12px;letter-spacing:.3px;text-transform:uppercase}
+.chapter-card h3{font-size:16px;font-weight:700;margin-top:8px;line-height:1.3}
+.chapter-card .desc{font-size:13px;color:var(--gray-500);margin-top:4px;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chapter-card .meta{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12px;color:var(--gray-500)}
+.chapter-card .meta .dot{width:3px;height:3px;border-radius:50%;background:var(--gray-300)}
 
-    /* subject page */
-    .subject-header { display:flex; align-items:center; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
-    .subject-header .icon { font-size:48px; }
-    .subject-header h2 { font-size:28px; font-weight:800; }
-    .subject-header .back-btn { background:var(--gray-200); padding:6px 20px; border-radius:30px; font-weight:600; font-size:14px; color:var(--gray-700); transition:var(--transition); margin-left:auto; }
-    .subject-header .back-btn:hover { background:var(--gray-300); }
-    .chapter-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:16px; }
-    .chapter-item { background:#fff; border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); border:1px solid var(--gray-200); transition:var(--transition); cursor:pointer; display:flex; flex-direction:column; }
-    .chapter-item:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--primary-light); }
-    .chapter-item .num { font-size:13px; font-weight:600; color:var(--primary); background:#eef4ff; display:inline-block; padding:0 12px; border-radius:12px; line-height:24px; align-self:flex-start; margin-bottom:6px; }
-    .chapter-item h3 { font-size:18px; font-weight:700; line-height:1.3; }
-    .chapter-item p { font-size:14px; color:var(--gray-500); margin-top:4px; flex:1; }
-    .chapter-item .meta { display:flex; align-items:center; gap:12px; margin-top:10px; font-size:13px; color:var(--gray-500); }
-    .chapter-item .meta .dot { width:6px; height:6px; border-radius:50%; background:var(--gray-300); }
-    .chapter-item .meta .status { font-weight:600; }
-    .chapter-item .meta .status.done { color:var(--success); }
-    .chapter-item .meta .status.pending { color:var(--secondary); }
+.chapter-view{background:#fff;border-radius:var(--radius);border:1px solid var(--gray-200);box-shadow:var(--shadow);overflow:hidden}
+.ch-header{padding:20px 26px 16px;background:linear-gradient(180deg,var(--gray-50),#fff);border-bottom:1px solid var(--gray-200)}
+.ch-header .crumb{font-size:12px;color:var(--gray-500);font-weight:600;cursor:pointer;margin-bottom:6px}
+.ch-header h2{font-size:clamp(19px,2.4vw,24px);font-weight:800;letter-spacing:-.3px}
+.ch-header .subtitle{font-size:14px;color:var(--gray-500);margin-top:4px}
+.ch-tabs{display:flex;gap:2px;padding:0 16px;background:#fff;border-bottom:1px solid var(--gray-200);overflow-x:auto;scrollbar-width:none}
+.ch-tabs::-webkit-scrollbar{display:none}
+.ch-tabs button{padding:14px 18px;font-size:14px;font-weight:600;color:var(--gray-500);border-bottom:3px solid transparent;white-space:nowrap;transition:var(--transition)}
+.ch-tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+.ch-body{padding:26px}
+.tab-pane{display:none;animation:fadeUp .28s ease}
+.tab-pane.active{display:block}
 
-    /* chapter view */
-    .chapter-view { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--gray-200); overflow:hidden; }
-    .chapter-view .ch-header { padding:20px 28px 16px; background:var(--gray-50); border-bottom:1px solid var(--gray-200); display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; }
-    .chapter-view .ch-header .info .num { font-size:14px; font-weight:600; color:var(--primary); background:#eef4ff; padding:0 14px; border-radius:20px; line-height:28px; display:inline-block; }
-    .chapter-view .ch-header .info h2 { font-size:26px; font-weight:800; margin-top:2px; }
-    .chapter-view .ch-header .back-btn { background:var(--gray-200); padding:6px 20px; border-radius:30px; font-weight:600; font-size:14px; color:var(--gray-700); transition:var(--transition); }
-    .chapter-view .ch-header .back-btn:hover { background:var(--gray-300); }
-    .chapter-view .ch-tabs { display:flex; gap:4px; padding:0 28px; background:var(--gray-50); border-bottom:1px solid var(--gray-200); flex-wrap:wrap; }
-    .chapter-view .ch-tabs button { padding:10px 22px; font-size:15px; font-weight:600; background:transparent; color:var(--gray-500); border-bottom:3px solid transparent; transition:var(--transition); border-radius:0; }
-    .chapter-view .ch-tabs button:hover { color:var(--gray-800); background:rgba(0,0,0,0.02); }
-    .chapter-view .ch-tabs button.active { color:var(--primary); border-bottom-color:var(--primary); }
-    .chapter-view .ch-body { padding:24px 28px 32px; }
-    .ch-body .tab-pane { display:none; animation:fadeUp 0.3s ease; }
-    .ch-body .tab-pane.active { display:block; }
+.content-block h1,.content-block h2,.content-block h3,.content-block h4{color:var(--gray-900);margin:14px 0 8px;line-height:1.3}
+.content-block h2{font-size:20px}.content-block h3{font-size:17px}
+.content-block p{font-size:15px;color:var(--gray-700);margin-bottom:10px;line-height:1.7}
+.content-block ul,.content-block ol{padding-left:22px;margin-bottom:12px}
+.content-block li{font-size:15px;color:var(--gray-700);margin-bottom:4px;line-height:1.65}
+.highlight-box{background:#eff6ff;border-left:4px solid var(--primary);padding:14px 18px;border-radius:0 12px 12px 0;margin:14px 0;font-size:14px}
+.tip-list{background:#fffbeb;border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 12px 12px 0;margin:14px 0;font-size:14px}
+.content-block table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+.content-block th,.content-block td{border:1px solid var(--gray-200);padding:9px 12px;text-align:left}
+.content-block th{background:var(--gray-50);font-weight:700}
 
-    /* content styles */
-    .content-block { margin-bottom:20px; }
-    .content-block h1 { font-size:28px; font-weight:800; margin-bottom:8px; color:var(--gray-900); }
-    .content-block h2 { font-size:22px; font-weight:700; margin-bottom:6px; color:var(--gray-900); }
-    .content-block h3 { font-size:18px; font-weight:700; margin-bottom:4px; color:var(--gray-800); }
-    .content-block h4 { font-size:16px; font-weight:700; margin-bottom:4px; color:var(--gray-800); }
-    .content-block p { font-size:15px; color:var(--gray-700); line-height:1.7; margin-bottom:8px; }
-    .content-block ul, .content-block ol { padding-left:24px; margin-bottom:8px; }
-    .content-block ul li, .content-block ol li { font-size:15px; color:var(--gray-700); line-height:1.7; margin-bottom:2px; }
-    .content-block .highlight-box { background:var(--gray-50); border-left:4px solid var(--primary); padding:14px 18px; border-radius:0 10px 10px 0; margin:12px 0; }
-    .content-block .highlight-box strong { color:var(--gray-900); }
-    .content-block .tip-list { background:#fef9e7; border-left:4px solid var(--secondary); padding:14px 18px; border-radius:0 10px 10px 0; margin:12px 0; }
-    .content-block .img-placeholder { background:var(--gray-100); border-radius:12px; padding:20px; text-align:center; color:var(--gray-500); font-size:14px; margin:12px 0; border:2px dashed var(--gray-300); min-height:80px; display:flex; align-items:center; justify-content:center; gap:8px; }
-    .content-block .img-placeholder .icon { font-size:32px; }
-    .content-block table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
-    .content-block table th, .content-block table td { border:1px solid var(--gray-200); padding:8px 12px; text-align:left; }
-    .content-block table th { background:var(--gray-50); font-weight:700; color:var(--gray-800); }
-    .content-block table td { color:var(--gray-700); }
-    .content-block .card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px; margin:12px 0; }
-    .content-block .card-grid .card { background:var(--gray-50); border-radius:12px; padding:14px 16px; border:1px solid var(--gray-200); text-align:center; }
-    .content-block .card-grid .card .emoji { font-size:32px; display:block; }
-    .content-block .card-grid .card .label { font-weight:600; font-size:15px; margin-top:4px; }
-    .content-block .card-grid .card .desc { font-size:13px; color:var(--gray-500); }
+.score-banner{background:linear-gradient(135deg,var(--gray-900),var(--gray-800));color:#fff;border-radius:14px;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.score-banner .label{font-size:13px;opacity:.7;font-weight:500}
+.score-banner .value{font-size:26px;font-weight:800;color:var(--accent)}
+.question-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:14px;padding:18px 20px;margin-bottom:12px}
+.question-item .q-text{font-weight:600;font-size:15px;margin-bottom:12px;line-height:1.5}
+.options{display:flex;flex-direction:column;gap:6px}
+.options label{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:#fff;border:1px solid var(--gray-200);font-size:14px;cursor:pointer;transition:var(--transition)}
+.options label:hover{background:#eff6ff;border-color:var(--primary-light)}
+.options input[type="radio"]{accent-color:var(--primary);width:16px;height:16px;cursor:pointer}
+.feedback{margin-top:10px;font-size:14px;font-weight:600;padding:8px 12px;border-radius:9px;display:inline-block}
+.feedback.correct{background:#dcfce7;color:#15803d}
+.feedback.wrong{background:#fee2e2;color:#b91c1c}
+.fill-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:14px 18px;margin-bottom:12px}
+.fill-item .q-text{font-size:14px;margin-bottom:8px}
+.fill-item input{width:100%;max-width:280px;padding:9px 14px;border:1px solid var(--gray-300);border-radius:9px;font-size:14px;background:#fff}
+.fill-item input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.qa-item{background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+.qa-item .q{font-weight:600;font-size:15px;color:var(--gray-900);margin-bottom:8px}
+.qa-item .a{font-size:14px;color:var(--gray-700);padding-left:14px;border-left:3px solid var(--primary);line-height:1.65}
 
-    /* MCQ, fill, QA */
-    .question-item { background:var(--gray-50); border-radius:12px; padding:16px 20px; margin-bottom:14px; border:1px solid var(--gray-200); }
-    .question-item .q-text { font-weight:600; font-size:16px; margin-bottom:8px; }
-    .question-item .options { display:flex; flex-direction:column; gap:4px; padding-left:4px; }
-    .question-item .options label { display:flex; align-items:center; gap:10px; font-size:15px; cursor:pointer; padding:4px 8px; border-radius:6px; transition:0.15s; }
-    .question-item .options label:hover { background:#eef4ff; }
-    .question-item .options input[type="radio"] { accent-color:var(--primary); width:16px; height:16px; cursor:pointer; }
-    .question-item .result-badge { margin-top:8px; font-size:14px; font-weight:600; padding:4px 14px; border-radius:20px; display:inline-block; }
-    .question-item .result-badge.correct { background:#dcfce7; color:#16a34a; }
-    .question-item .result-badge.wrong { background:#fee2e2; color:#dc2626; }
-    .question-item .result-badge.pending { background:#fef9c3; color:#ca8a04; }
-    .fill-item { background:var(--gray-50); border-radius:12px; padding:14px 20px; margin-bottom:12px; border:1px solid var(--gray-200); }
-    .fill-item .q-text { font-size:15px; margin-bottom:6px; }
-    .fill-item .q-text .blank { display:inline-block; min-width:80px; border-bottom:2px dashed var(--primary); margin:0 4px; padding:0 6px; }
-    .fill-item input { border:1px solid var(--gray-300); border-radius:6px; padding:4px 12px; font-size:14px; width:180px; max-width:100%; margin-top:4px; }
-    .fill-item input:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 3px rgba(37,99,235,0.15); }
-    .fill-item .fill-result { margin-top:6px; font-size:14px; font-weight:600; }
-    .fill-item .fill-result .ans { color:#16a34a; }
-    .fill-item .fill-result .wrong-ans { color:#dc2626; }
-    .qa-item { background:var(--gray-50); border-radius:12px; padding:14px 20px; margin-bottom:10px; border:1px solid var(--gray-200); }
-    .qa-item .q { font-weight:600; font-size:15px; color:var(--gray-900); }
-    .qa-item .a { margin-top:4px; font-size:15px; color:var(--gray-700); padding-left:8px; border-left:3px solid var(--primary); padding-left:14px; }
-    .qa-item .a .label { font-weight:600; color:var(--primary); }
+.admin-shell{background:#fff;border-radius:var(--radius);border:1px solid var(--gray-200);box-shadow:var(--shadow);overflow:hidden}
+.admin-topbar{padding:16px 22px;background:linear-gradient(180deg,var(--gray-50),#fff);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.admin-topbar h2{font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px}
+.admin-nav{display:flex;gap:4px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--gray-200);overflow-x:auto;scrollbar-width:none}
+.admin-nav::-webkit-scrollbar{display:none}
+.admin-nav button{padding:8px 14px;font-size:13px;font-weight:600;color:var(--gray-500);border-radius:9px;white-space:nowrap;transition:var(--transition)}
+.admin-nav button:hover{color:var(--gray-800);background:var(--gray-100)}
+.admin-nav button.active{background:var(--primary);color:#fff}
+.admin-content{padding:22px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-weight:600;font-size:13px;margin-bottom:5px;color:var(--gray-700)}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 14px;border:1px solid var(--gray-300);border-radius:10px;font-size:14px;background:#fff;transition:var(--transition)}
+.form-group textarea{min-height:110px;resize:vertical;font-family:'SF Mono',Consolas,monospace;font-size:13px;line-height:1.55}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:6px 14px;border-radius:20px;background:var(--gray-100);color:var(--gray-600);font-size:12px;font-weight:600;cursor:pointer;transition:var(--transition)}
+.chip.active{background:var(--primary);color:#fff}
+.item-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;margin-bottom:8px;flex-wrap:wrap}
+.item-row .info{flex:1;min-width:180px}
+.item-row .info .title{font-weight:600;font-size:14px}
+.item-row .info .sub{font-size:12px;color:var(--gray-500)}
+.item-row .actions{display:flex;gap:6px}
+.pdf-viewer{width:100%;height:70vh;border:1px solid var(--gray-200);border-radius:12px;background:var(--gray-100)}
 
-    .btn-primary { background:var(--primary); color:#fff; padding:8px 24px; border-radius:30px; font-weight:600; font-size:15px; transition:var(--transition); box-shadow:0 2px 12px rgba(37,99,235,0.25); }
-    .btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); }
-    .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-    .btn-secondary { background:var(--gray-200); color:var(--gray-700); padding:8px 22px; border-radius:30px; font-weight:600; font-size:14px; transition:var(--transition); }
-    .btn-secondary:hover { background:var(--gray-300); }
-    .btn-success { background:var(--success); color:#fff; padding:8px 24px; border-radius:30px; font-weight:600; font-size:15px; transition:var(--transition); }
-    .btn-success:hover { background:#16a34a; transform:translateY(-1px); }
-    .btn-danger { background:var(--danger); color:#fff; padding:8px 24px; border-radius:30px; font-weight:600; font-size:15px; transition:var(--transition); }
-    .btn-danger:hover { background:#dc2626; transform:translateY(-1px); }
-    .btn-group { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.empty{text-align:center;padding:56px 24px;color:var(--gray-500);background:#fff;border:2px dashed var(--gray-200);border-radius:16px}
+.empty .icon{font-size:52px;display:block;margin-bottom:10px;opacity:.6}
+.empty h3{font-size:16px;font-weight:700;color:var(--gray-700);margin-bottom:4px}
+.empty p{font-size:13px;max-width:340px;margin:0 auto}
 
-    .score-banner { background:var(--gray-900); border-radius:12px; padding:14px 20px; color:#fff; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
-    .score-banner .score-num { font-size:26px; font-weight:800; color:var(--secondary); }
-    .score-banner .score-label { font-size:14px; opacity:0.7; }
+#toastWrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:380px}
+.toast{padding:13px 18px;border-radius:12px;background:var(--gray-900);color:#fff;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;pointer-events:all;animation:toastIn .3s ease}
+.toast.success{background:#15803d}.toast.error{background:#b91c1c}.toast.info{background:#1e40af}
+.toast .close{margin-left:auto;opacity:.6;font-size:18px;line-height:1}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
-    /* admin */
-    .admin-login { max-width:400px; margin:60px auto; background:#fff; border-radius:var(--radius); padding:32px 28px; box-shadow:var(--shadow-lg); border:1px solid var(--gray-200); }
-    .admin-login h2 { font-size:24px; font-weight:800; text-align:center; margin-bottom:4px; }
-    .admin-login p { text-align:center; color:var(--gray-500); margin-bottom:20px; }
-    .admin-login label { font-weight:600; font-size:14px; display:block; margin-bottom:4px; }
-    .admin-login input { width:100%; padding:10px 14px; border:1px solid var(--gray-300); border-radius:10px; margin-bottom:14px; font-size:15px; }
-    .admin-login input:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 3px rgba(37,99,235,0.15); }
-    .admin-login .error { color:var(--danger); font-size:14px; margin-top:-8px; margin-bottom:12px; display:none; }
+.fab{position:fixed;bottom:calc(20px + var(--safe-bottom));right:20px;z-index:70;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#6366f1);color:#fff;font-size:26px;display:grid;place-items:center;box-shadow:0 8px 26px rgba(37,99,235,.4);transition:var(--transition)}
+.fab:hover{transform:scale(1.06)}
+.chat-panel{position:fixed;bottom:calc(88px + var(--safe-bottom));right:20px;z-index:70;width:min(370px,calc(100vw - 40px));height:min(540px,70vh);background:#fff;border-radius:20px;box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);display:flex;flex-direction:column;overflow:hidden;animation:popIn .25s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.chat-head{padding:14px 18px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.chat-head .status{font-size:11px;opacity:.85;font-weight:500}
+.chat-body{flex:1;overflow-y:auto;padding:16px;background:var(--gray-50);display:flex;flex-direction:column;gap:10px}
+.chat-msg{max-width:82%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.55;word-wrap:break-word;white-space:pre-wrap}
+.chat-msg.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.ai{align-self:flex-start;background:#fff;border:1px solid var(--gray-200);border-bottom-left-radius:4px}
+.chat-msg.typing{color:var(--gray-500);font-style:italic}
+.chat-input{padding:12px;border-top:1px solid var(--gray-200);display:flex;gap:8px;background:#fff}
+.chat-input input{flex:1;padding:10px 14px;border:1px solid var(--gray-300);border-radius:20px;font-size:14px}
+.chat-input input:focus{border-color:var(--primary)}
+.chat-input button{width:38px;height:38px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:16px}
 
-    .admin-panel { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--gray-200); overflow:hidden; }
-    .admin-panel .admin-header { padding:18px 24px; background:var(--gray-50); border-bottom:1px solid var(--gray-200); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
-    .admin-panel .admin-header h2 { font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px; }
-    .admin-panel .admin-body { padding:24px; }
-    .admin-panel .admin-body .filters { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
-    .admin-panel .admin-body .filters select, .admin-panel .admin-body .filters input { padding:8px 14px; border:1px solid var(--gray-300); border-radius:10px; font-size:14px; background:#fff; }
-    .admin-panel .admin-body .filters select:focus, .admin-panel .admin-body .filters input:focus { border-color:var(--primary); outline:none; }
-
-    .admin-chapter-list { display:flex; flex-direction:column; gap:10px; margin-top:12px; max-height:500px; overflow-y:auto; }
-    .admin-chapter-item { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--gray-50); border-radius:10px; border:1px solid var(--gray-200); flex-wrap:wrap; gap:8px; }
-    .admin-chapter-item .info { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-    .admin-chapter-item .info .subject-badge { font-size:12px; font-weight:600; padding:2px 12px; border-radius:12px; background:var(--gray-200); color:var(--gray-600); }
-    .admin-chapter-item .info .title { font-weight:600; font-size:15px; }
-    .admin-chapter-item .actions { display:flex; gap:6px; }
-    .admin-chapter-item .actions button { padding:4px 14px; border-radius:20px; font-size:13px; font-weight:600; transition:var(--transition); }
-    .admin-chapter-item .actions .edit-btn { background:#eef4ff; color:var(--primary); }
-    .admin-chapter-item .actions .edit-btn:hover { background:#dbeafe; }
-    .admin-chapter-item .actions .del-btn { background:#fee2e2; color:var(--danger); }
-    .admin-chapter-item .actions .del-btn:hover { background:#fecaca; }
-
-    .admin-form { background:var(--gray-50); border-radius:12px; padding:20px 24px; margin-top:20px; border:1px solid var(--gray-200); display:none; }
-    .admin-form.active { display:block; animation:fadeUp 0.3s ease; }
-    .admin-form h3 { font-size:20px; font-weight:700; margin-bottom:12px; }
-    .admin-form .form-group { margin-bottom:12px; }
-    .admin-form .form-group label { font-weight:600; font-size:14px; display:block; margin-bottom:2px; }
-    .admin-form .form-group input, .admin-form .form-group select, .admin-form .form-group textarea { width:100%; padding:8px 14px; border:1px solid var(--gray-300); border-radius:10px; font-size:14px; background:#fff; }
-    .admin-form .form-group textarea { min-height:120px; resize:vertical; font-family:'Courier New', monospace; font-size:13px; line-height:1.5; }
-    .admin-form .form-group input:focus, .admin-form .form-group select:focus, .admin-form .form-group textarea:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
-    .admin-form .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .admin-form .form-actions { display:flex; gap:10px; margin-top:8px; }
-
-    .empty-state { text-align:center; padding:40px 20px; color:var(--gray-500); }
-    .empty-state .icon { font-size:48px; display:block; margin-bottom:8px; }
-
-    /* responsive */
-    @media (max-width:640px) {
-      .app-header { padding:10px 16px; }
-      .app-header .logo { font-size:17px; }
-      .app-header .logo .icon { width:34px; height:34px; font-size:16px; }
-      .app-header .nav-links a { font-size:12px; padding:4px 12px; }
-      .hero { padding:24px 20px; }
-      .hero h1 { font-size:24px; }
-      .hero p { font-size:16px; }
-      .subject-grid { grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:12px; }
-      .subject-card { padding:16px 12px; }
-      .subject-card .icon { font-size:32px; }
-      .subject-card .name { font-size:15px; }
-      .chapter-list { grid-template-columns:1fr; }
-      .chapter-view .ch-header { padding:14px 16px 12px; }
-      .chapter-view .ch-header .info h2 { font-size:20px; }
-      .chapter-view .ch-tabs { padding:0 12px; }
-      .chapter-view .ch-tabs button { padding:8px 14px; font-size:13px; }
-      .chapter-view .ch-body { padding:16px 14px 20px; }
-      .admin-form .form-row { grid-template-columns:1fr; }
-      .admin-panel .admin-body { padding:16px; }
-      .admin-chapter-item { flex-direction:column; align-items:stretch; }
-      .admin-chapter-item .actions { justify-content:flex-end; }
-      .app-main { padding:16px 12px 40px; }
-    }
-    @media (max-width:400px) { .subject-grid { grid-template-columns:1fr 1fr; gap:10px; } }
-    .hidden { display:none !important; }
-    .text-center { text-align:center; }
-    .mt-8 { margin-top:8px; }
-    .mt-16 { margin-top:16px; }
-    .w-full { width:100%; }
-
-    /* subject colors */
-    .subj-science .badge { background:#e8f5e9; color:#2e7d32; }
-    .subj-maths .badge { background:#ffebee; color:#c62828; }
-    .subj-english .badge { background:#e3f2fd; color:#0d47a1; }
-    .subj-hindi .badge { background:#fff3e0; color:#e65100; }
-    .subj-sst .badge { background:#f3e5f5; color:#6a1b9a; }
-  </style>
+@media (max-width:640px){
+  .app-main{padding:16px 14px 120px}
+  .hero{padding:26px 22px;border-radius:16px}
+  .hero-actions .btn{flex:1}
+  .class-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .class-card{padding:16px 10px}
+  .class-card .grade{font-size:26px}
+  .subject-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .subject-card{padding:16px 10px}
+  .subject-card .icon{font-size:32px}
+  .chapter-list{grid-template-columns:1fr}
+  .ch-header{padding:16px 18px 12px}
+  .ch-body{padding:18px 16px}
+  .form-row{grid-template-columns:1fr}
+  .admin-content{padding:16px}
+  .logo .name{display:none}
+  .chat-panel{width:calc(100vw - 24px);right:12px;bottom:calc(80px + var(--safe-bottom))}
+  .fab{right:14px;bottom:calc(14px + var(--safe-bottom));width:52px;height:52px;font-size:23px}
+}
+</style>
 </head>
 <body>
 
-  <!-- ===== HEADER ===== -->
-  <header class="app-header">
-    <div class="logo">
-      <div class="icon">📚</div>
-      SmartCampus <span>AI</span>
+<div id="loader">
+  <div class="brand">SmartCampus <span>AI</span></div>
+  <div class="tag">Class 1–10 AI Learning Platform</div>
+  <div class="spinner"></div>
+</div>
+
+<header class="app-header">
+  <div class="logo" id="brandLogo">
+    <div class="icon" id="brandIcon">🎓</div>
+    <div class="name" id="brandName">SmartCampus <span>AI</span></div>
+  </div>
+  <div class="header-actions">
+    <button class="lang-btn" id="langBtn">🌐 EN</button>
+    <button class="icon-btn" id="adminBtn" title="Admin">⚙️</button>
+    <button class="user-chip hidden" id="userChip">
+      <div class="avatar" id="userAvatar">?</div>
+      <span id="userName">User</span>
+    </button>
+    <button class="icon-btn hidden" id="logoutBtn" title="Logout">↩</button>
+  </div>
+</header>
+
+<main class="app-main">
+  <section class="page" id="page-auth"></section>
+  <section class="page" id="page-home"></section>
+  <section class="page" id="page-subjects"></section>
+  <section class="page" id="page-chapters"></section>
+  <section class="page" id="page-chapter"></section>
+  <section class="page" id="page-dashboard"></section>
+  <section class="page" id="page-admin"></section>
+</main>
+
+<button class="fab" id="chatFab" title="Ask SmartCampus AI">🤖</button>
+<div class="chat-panel hidden" id="chatPanel">
+  <div class="chat-head">
+    <div>
+      <div>🤖 SmartCampus AI</div>
+      <div class="status" id="chatStatus">Ask about your chapter...</div>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <button class="lang-toggle" id="langToggle">🌐 English</button>
-      <nav class="nav-links">
-        <a href="#" data-page="home" class="active">🏠 Home</a>
-        <a href="#" data-page="admin" class="admin-link">🔐 Admin</a>
-      </nav>
-    </div>
-  </header>
+    <button id="chatClose" style="margin-left:auto;font-size:20px;opacity:.8">×</button>
+  </div>
+  <div class="chat-body" id="chatBody">
+    <div class="chat-msg ai">Hi! I'm SmartCampus AI 👋 Ask me anything about your current chapter, or any topic you're studying.</div>
+  </div>
+  <div class="chat-input">
+    <input id="chatInput" type="text" placeholder="Type your question..." />
+    <button id="chatSend">➤</button>
+  </div>
+</div>
 
-  <!-- ===== TOAST ===== -->
-  <div class="toast-container" id="toastContainer"></div>
+<div id="toastWrap"></div>
 
-  <!-- ===== MAIN ===== -->
-  <main class="app-main">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut, updateProfile, GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc,
+  collection, query, where, orderBy, getDocs, serverTimestamp, limit, writeBatch
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import {
+  getStorage, ref as sRef, uploadBytesResumable, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-storage.js";
 
-    <!-- HOME -->
-    <section class="page active" id="page-home">
-      <div class="hero">
-        <h1>🌟 Welcome, <span>Learner!</span></h1>
-        <p id="heroDesc">Explore Class 5 subjects with fun chapters, quizzes, and activities!</p>
-      </div>
-      <div class="subject-grid" id="subjectGrid"></div>
-    </section>
+/* ======================= CONFIG ======================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDBYiMVATYiffsYFKFqyuiIftG53GWZnXQ",
+  authDomain: "smartcampus-ac3cc.firebaseapp.com",
+  projectId: "smartcampus-ac3cc",
+  storageBucket: "smartcampus-ac3cc.firebasestorage.app",
+  messagingSenderId: "741878301871",
+  appId: "1:741878301871:web:5b74cc5d9924d17caf805a"
+};
 
-    <!-- SUBJECT -->
-    <section class="page" id="page-subject">
-      <div class="subject-header">
-        <span class="icon" id="subjIcon">📖</span>
-        <h2 id="subjTitle">Subject</h2>
-        <button class="back-btn" id="subjBack">← Back</button>
-      </div>
-      <div class="chapter-list" id="chapterList"></div>
-    </section>
+const BRANDING = {
+  name: "SmartCampus AI",
+  nameHtml: 'SmartCampus <span>AI</span>',
+  icon: "🎓",
+  tagline: "AI-Powered Learning for Class 1–10",
+  poweredBy: "An iStart Rajasthan Initiative"
+};
 
-    <!-- CHAPTER -->
-    <section class="page" id="page-chapter">
-      <div class="chapter-view" id="chapterView"></div>
-    </section>
+const CLASSES_SEED = Array.from({length:10},(_,i)=>({
+  id:`class-${i+1}`, order:i+1,
+  name:`Class ${i+1}`, nameHi:`कक्षा ${i+1}`, active:true
+}));
 
-    <!-- ADMIN -->
-    <section class="page" id="page-admin">
-      <div id="adminContent"></div>
-    </section>
+const GEMINI_MODEL = 'gemini-1.5-flash';
 
-  </main>
+/* ======================= I18N ======================= */
+const I18N = {
+  en:{
+    home:"Home",dashboard:"My Dashboard",admin:"Admin",login:"Login",signup:"Sign Up",logout:"Logout",
+    email:"Email",password:"Password",name:"Full Name",selectClass:"Choose your class",
+    chapters:"Chapters",chapter:"Chapter",subjects:"Subjects",learn:"Learn",practice:"Practice",
+    quiz:"Quiz",qa:"Q&A",aiAsk:"AI Ask",welcome:"Welcome",continue:"Continue",
+    noChapters:"No chapters yet",noSubjects:"No subjects added yet",start:"Start",
+    correct:"Correct",wrong:"Wrong",checkAnswers:"Check Answers",reset:"Reset",next:"Next",
+    restart:"Restart Quiz",quizComplete:"🎉 Quiz Complete",yourScore:"Your Score",
+    viewDashboard:"View Dashboard",back:"Back",askAI:"Ask SmartCampus AI",
+    askPlaceholder:"Type your question...",send:"Send",adminLogin:"Admin Login",
+    createAccount:"Create Account",signInWithGoogle:"Continue with Google",
+    progress:"Progress",recentActivity:"Recent Activity",pdf:"Chapter PDF",openPdf:"Open PDF",
+    uploadPdf:"Upload PDF",generateAI:"Generate Content with AI",save:"Save",loading:"Loading...",
+    pleaseWait:"Please wait...",error:"Something went wrong",aiKeyMissing:"AI not configured. Ask admin to add Gemini API key in Settings."
+  },
+  hi:{
+    home:"होम",dashboard:"मेरा डैशबोर्ड",admin:"एडमिन",login:"लॉगिन",signup:"साइन अप",logout:"लॉगआउट",
+    email:"ईमेल",password:"पासवर्ड",name:"पूरा नाम",selectClass:"अपनी कक्षा चुनें",
+    chapters:"अध्याय",chapter:"अध्याय",subjects:"विषय",learn:"पढ़ें",practice:"अभ्यास",
+    quiz:"प्रश्नोत्तरी",qa:"प्रश्न एवं उत्तर",aiAsk:"AI से पूछें",welcome:"स्वागत",continue:"जारी रखें",
+    noChapters:"अभी कोई अध्याय नहीं",noSubjects:"अभी कोई विषय नहीं जोड़ा गया",start:"शुरू करें",
+    correct:"सही",wrong:"गलत",checkAnswers:"उत्तर जाँचें",reset:"रीसेट",next:"अगला",
+    restart:"क्विज़ रीस्टार्ट",quizComplete:"🎉 क्विज़ पूरा",yourScore:"आपका स्कोर",
+    viewDashboard:"डैशबोर्ड देखें",back:"वापस",askAI:"SmartCampus AI से पूछें",
+    askPlaceholder:"अपना प्रश्न लिखें...",send:"भेजें",adminLogin:"एडमिन लॉगिन",
+    createAccount:"खाता बनाएँ",signInWithGoogle:"Google से जारी रखें",
+    progress:"प्रगति",recentActivity:"हाल की गतिविधि",pdf:"अध्याय PDF",openPdf:"PDF खोलें",
+    uploadPdf:"PDF अपलोड करें",generateAI:"AI से सामग्री बनाएँ",save:"सहेजें",loading:"लोड हो रहा है...",
+    pleaseWait:"कृपया प्रतीक्षा करें...",error:"कुछ गलत हो गया",aiKeyMissing:"AI सेट नहीं है। एडमिन से Settings में Gemini API key जोड़ने को कहें।"
+  }
+};
+const t = (k)=> (I18N[State.lang]?.[k]) || I18N.en[k] || k;
 
-  <script>
-    // ================================================================
-    //  FIREBASE HELPERS (wrapped)
-    // ================================================================
+/* ======================= FIREBASE ======================= */
+const firebaseApp = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
 
-    const fb = window.__firebase;
-    let currentUser = null;
+/* ======================= STATE ======================= */
+const State = {
+  lang: localStorage.getItem('sc_lang') || 'en',
+  user: null, profile: null, isAdmin: false, route: 'home',
+  classes: [], currentClass: null, currentSubject: null, currentChapter: null,
+  subjectsCache: {}, chaptersCache: {}, questionsCache: {},
+  chatContext: null, geminiKey: null
+};
 
-    if (fb) {
-      fb.onAuthStateChanged(fb.auth, (user) => {
-        if (user) {
-          currentUser = user;
-          console.log('✅ Firebase user:', user.uid);
-          // Load data from Firestore after login
-          loadAllDataFromFirestore();
-        } else {
-          fb.signInAnonymously(fb.auth).catch(e => console.warn('Auth error:', e));
-        }
-      });
-    } else {
-      console.warn('Firebase not loaded, using localStorage fallback.');
-    }
+/* ======================= UTILS ======================= */
+const $  = (s,r=document)=> r.querySelector(s);
+const $$ = (s,r=document)=> Array.from(r.querySelectorAll(s));
+const esc = (s='')=> String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-    // ================================================================
-    //  DATA LAYER with Firebase (or localStorage fallback)
-    // ================================================================
+function toast(msg, type='info', ms=3500){
+  const wrap = $('#toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${esc(msg)}</span><button class="close">×</button>`;
+  el.querySelector('.close').onclick = ()=> el.remove();
+  wrap.appendChild(el);
+  setTimeout(()=> el.parentNode && el.remove(), ms);
+}
+function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+function initials(name=''){ return name.trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?'; }
+function setActive(page){
+  $$('.page').forEach(p=> p.classList.remove('active'));
+  const el = $('#page-'+page); if(el) el.classList.add('active');
+  State.route = page;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
-    const STORE_KEY = 'smartcampus_data';
-    let appData = null; // will be loaded
+/* ======================= DATA SERVICE ======================= */
+const DataService = {
+  async getClasses(){
+    const snap = await getDocs(query(collection(db,'classes'), orderBy('order')));
+    return snap.docs.map(d=>({id:d.id, ...d.data()}));
+  },
+  async getSubjects(classId){
+    if(State.subjectsCache[classId]) return State.subjectsCache[classId];
+    const snap = await getDocs(query(
+      collection(db,'subjects'),
+      where('classId','==',classId),
+      where('active','==',true),
+      orderBy('order')
+    ));
+    const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    State.subjectsCache[classId] = list;
+    return list;
+  },
+  async getChapters(subjectId){
+    if(State.chaptersCache[subjectId]) return State.chaptersCache[subjectId];
+    const snap = await getDocs(query(
+      collection(db,'chapters'),
+      where('subjectId','==',subjectId),
+      orderBy('order')
+    ));
+    const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    State.chaptersCache[subjectId] = list;
+    return list;
+  },
+  async getQuestions(chapterId){
+    if(State.questionsCache[chapterId]) return State.questionsCache[chapterId];
+    const snap = await getDocs(query(collection(db,'questions'), where('chapterId','==',chapterId)));
+    const grouped = { mcq:[], fill:[], qa:[] };
+    snap.docs.forEach(d=>{
+      const q = {id:d.id, ...d.data()};
+      (grouped[q.type] || (grouped[q.type]=[])).push(q);
+    });
+    Object.keys(grouped).forEach(k=> grouped[k].sort((a,b)=>(a.order||0)-(b.order||0)));
+    State.questionsCache[chapterId] = grouped;
+    return grouped;
+  },
+  clearCache(){ State.subjectsCache={}; State.chaptersCache={}; State.questionsCache={}; },
+  async seedDefaults(){
+    const exist = await getDocs(query(collection(db,'classes'), limit(1)));
+    if(!exist.empty) return false;
+    const batch = writeBatch(db);
+    CLASSES_SEED.forEach(c=> batch.set(doc(db,'classes',c.id), c));
+    batch.set(doc(db,'subjects','class5-science'), {classId:'class-5', order:1, active:true, icon:'🔬', name:'Science', nameHi:'विज्ञान', desc:'Explore the world around you'});
+    batch.set(doc(db,'subjects','class5-maths'),   {classId:'class-5', order:2, active:true, icon:'📐', name:'Mathematics', nameHi:'गणित', desc:'Numbers, shapes and logic'});
+    batch.set(doc(db,'subjects','class5-english'), {classId:'class-5', order:3, active:true, icon:'📖', name:'English', nameHi:'अंग्रेज़ी', desc:'Reading, writing & grammar'});
+    batch.set(doc(db,'subjects','class5-hindi'),   {classId:'class-5', order:4, active:true, icon:'🕉️', name:'Hindi', nameHi:'हिंदी', desc:'भाषा और व्याकरण'});
+    batch.set(doc(db,'subjects','class5-sst'),     {classId:'class-5', order:5, active:true, icon:'🌍', name:'Social Studies', nameHi:'सामाजिक विज्ञान', desc:'History & Geography'});
+    await batch.commit();
+    return true;
+  }
+};
 
-    // Default subjects structure
-    const SUBJECTS = {
-      science: { id: 'science', name: 'Science', icon: '🔬' },
-      maths: { id: 'maths', name: 'Mathematics', icon: '📐' },
-      english: { id: 'english', name: 'English', icon: '📖' },
-      hindi: { id: 'hindi', name: 'Hindi', icon: '🕉️' },
-      sst: { id: 'sst', name: 'Social Studies', icon: '🌍' }
-    };
-
-    // Sample Chapter 1 (Science)
-    const SAMPLE_CHAPTER = {
-      id: 1,
-      title: "Food, Health and Hygiene",
-      titleHi: "भोजन, स्वास्थ्य और स्वच्छता",
-      summary: "Nutrients, balanced diet, hygiene, diseases & prevention.",
-      summaryHi: "पोषक तत्व, संतुलित आहार, स्वच्छता, बीमारियाँ और रोकथाम।",
-      content: `
-        <div class="content-block">
-          <h2>🍎 Nutrients in Food</h2>
-          <p>Food gives us energy, helps us grow, and protects us from diseases. It contains <strong>carbohydrates, proteins, fats, vitamins, and minerals</strong>. Roughage and water are also important.</p>
-          <div class="highlight-box"><strong>Balanced Diet:</strong> A diet which contains all nutrients, roughage and water in the right amount.</div>
-          <h3>🧼 Hygiene</h3>
-          <p>Hygiene means following good habits. Personal hygiene includes keeping body clean. Social hygiene includes keeping surroundings clean.</p>
-          <ul class="tip-list"><li>Wash hands with soap for 30 seconds.</li><li>Brush teeth twice daily.</li><li>Clip nails regularly.</li></ul>
-          <h3>🦠 Diseases</h3>
-          <p><strong>Communicable:</strong> spread person-to-person (e.g., cold, flu).<br><strong>Non-communicable:</strong> do not spread (e.g., scurvy, rickets).</p>
-          <div class="card-grid">
-            <div class="card"><span class="emoji">🥗</span><div class="label">Carbohydrates</div><div class="desc">Energy</div></div>
-            <div class="card"><span class="emoji">🥩</span><div class="label">Proteins</div><div class="desc">Growth</div></div>
-            <div class="card"><span class="emoji">🧈</span><div class="label">Fats</div><div class="desc">Energy storage</div></div>
-            <div class="card"><span class="emoji">🍊</span><div class="label">Vitamins</div><div class="desc">Protection</div></div>
-          </div>
-          <div class="img-placeholder"><span class="icon">🥗</span> Food groups — carbohydrates, proteins, vitamins</div>
-          <h3>📊 Deficiency Diseases</h3>
-          <table><thead><tr><th>Disease</th><th>Cause</th><th>Symptoms</th></tr></thead>
-            <tbody><tr><td>Night blindness</td><td>Vitamin A</td><td>Difficulty seeing at night</td></tr>
-            <tr><td>Scurvy</td><td>Vitamin C</td><td>Bleeding gums</td></tr>
-            <tr><td>Rickets</td><td>Vitamin D</td><td>Soft bones</td></tr>
-            <tr><td>Anaemia</td><td>Iron</td><td>Fatigue, pale skin</td></tr></tbody>
-          </table>
-        </div>
-      `,
-      mcqs: [
-        { q: "Which nutrient helps in growth?", opts: ["Proteins", "Fats", "Vitamins", "Minerals"], ans: 0 },
-        { q: "Deficiency of Vitamin C causes?", opts: ["Scurvy", "Rickets", "Anaemia", "Goitre"], ans: 0 },
-        { q: "Which is a communicable disease?", opts: ["Rickets", "Scurvy", "Cholera", "Marasmus"], ans: 2 },
-        { q: "Main cause of goitre?", opts: ["Iron deficiency", "Iodine deficiency", "Calcium deficiency",
-            "Vitamin D deficiency"
-          ], ans: 1 },
-        { q: "How to prevent communicable diseases?", opts: ["Avoid contact with sick", "Eat junk food",
-            "Don't wash hands", "Drink dirty water"
-          ], ans: 0 }
-      ],
-      fills: [
-        { q: "Food gives us ______, helps us grow, and protects us from diseases.", ans: "energy" },
-        { q: "A disease can be identified by analysing its ______.", ans: "symptoms" },
-        { q: "Deficiency of ______ in diet leads to anaemia.", ans: "iron" },
-        { q: "Hygiene means following ______.", ans: "good habits" }
-      ],
-      qa: [
-        { q: "What is a balanced diet?", a: "A diet that contains all nutrients, roughage and water in the right amount." },
-        { q: "What is a disease? How can it be identified?",
-          a: "A disease is a condition where the body does not function normally. It can be identified by analysing its symptoms." },
-        { q: "Name two ways by which communicable diseases spread.",
-          a: "Through contact with an infected person and through contaminated food and water." }
-      ]
-    };
-
-    function getDefaultData() {
-      return {
-        subjects: {
-          science: { ...SUBJECTS.science, chapters: [SAMPLE_CHAPTER] },
-          maths: { ...SUBJECTS.maths, chapters: [] },
-          english: { ...SUBJECTS.english, chapters: [] },
-          hindi: { ...SUBJECTS.hindi, chapters: [] },
-          sst: { ...SUBJECTS.sst, chapters: [] }
-        }
-      };
-    }
-
-    // ---------- Load from Firebase or localStorage ----------
-    async function loadAllDataFromFirestore() {
-      if (!fb) {
-        // fallback to localStorage
-        loadFromLocalStorage();
-        renderHome();
-        return;
-      }
-      try {
-        const docRef = fb.doc(fb.db, 'portalData', 'main');
-        const docSnap = await fb.getDoc(docRef);
-        if (docSnap.exists()) {
-          appData = docSnap.data();
-          // ensure all subjects exist
-          for (const key of Object.keys(SUBJECTS)) {
-            if (!appData.subjects[key]) {
-              appData.subjects[key] = { ...SUBJECTS[key], chapters: [] };
-            }
-          }
-        } else {
-          // first time: create default
-          appData = getDefaultData();
-          await fb.setDoc(docRef, appData);
-        }
-        renderHome();
-      } catch (e) {
-        console.warn('Firestore load error, using localStorage fallback:', e);
-        loadFromLocalStorage();
-        renderHome();
-      }
-    }
-
-    function loadFromLocalStorage() {
-      try {
-        const raw = localStorage.getItem(STORE_KEY);
-        if (raw) {
-          appData = JSON.parse(raw);
-          for (const key of Object.keys(SUBJECTS)) {
-            if (!appData.subjects[key]) appData.subjects[key] = { ...SUBJECTS[key], chapters: [] };
-          }
-        } else {
-          appData = getDefaultData();
-          localStorage.setItem(STORE_KEY, JSON.stringify(appData));
-        }
-      } catch (e) {
-        appData = getDefaultData();
-      }
-    }
-
-    // ---------- Save to Firebase (or localStorage) ----------
-    async function saveAppData() {
-      if (fb && currentUser) {
-        try {
-          const docRef = fb.doc(fb.db, 'portalData', 'main');
-          await fb.setDoc(docRef, appData);
-          console.log('✅ Data saved to Firestore');
-        } catch (e) {
-          console.warn('Firestore save error, saving to localStorage:', e);
-          localStorage.setItem(STORE_KEY, JSON.stringify(appData));
-        }
-      } else {
-        localStorage.setItem(STORE_KEY, JSON.stringify(appData));
-      }
-    }
-
-    // ================================================================
-    //  NAVIGATION & RENDER
-    // ================================================================
-
-    let currentPage = 'home';
-    let currentSubject = null;
-    let currentChapter = null;
-    let adminLoggedIn = false;
-    let currentLang = 'en'; // 'en' or 'hi'
-
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => document.querySelectorAll(sel);
-    const pages = {
-      home: $('#page-home'),
-      subject: $('#page-subject'),
-      chapter: $('#page-chapter'),
-      admin: $('#page-admin'),
-    };
-    const navLinks = $$('.app-header .nav-links a');
-
-    function showToast(msg, type = 'info', duration = 3500) {
-      const container = $('#toastContainer');
-      const t = document.createElement('div');
-      t.className = `toast ${type}`;
-      t.innerHTML = `<span>${msg}</span><button class="close">&times;</button>`;
-      t.querySelector('.close').addEventListener('click', () => t.remove());
-      container.appendChild(t);
-      setTimeout(() => { if (t.parentNode) t.remove(); }, duration);
-    }
-
-    function navigateTo(page, data) {
-      Object.values(pages).forEach(el => el.classList.remove('active'));
-      const target = pages[page];
-      if (target) target.classList.add('active');
-      navLinks.forEach(link => link.classList.toggle('active', link.dataset.page === page));
-      currentPage = page;
-      if (page === 'home') renderHome();
-      else if (page === 'subject') renderSubject(data);
-      else if (page === 'chapter') renderChapter(data);
-      else if (page === 'admin') renderAdmin();
-    }
-
-    navLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        navigateTo(link.dataset.page);
+/* ======================= AUTH ======================= */
+const AuthService = {
+  async bootstrap(){
+    return new Promise((resolve)=>{
+      onAuthStateChanged(auth, async (user)=>{
+        if(user){ State.user = user; await this.loadProfile(); }
+        else { try { await signInAnonymously(auth); } catch(e){ console.warn('anon failed', e); } }
+        resolve(user);
       });
     });
-
-    // ================================================================
-    //  RENDER: HOME
-    // ================================================================
-
-    function renderHome() {
-      const grid = $('#subjectGrid');
-      grid.innerHTML = '';
-      for (const [key, subj] of Object.entries(appData.subjects)) {
-        const count = subj.chapters ? subj.chapters.length : 0;
-        const card = document.createElement('div');
-        card.className = 'subject-card';
-        card.dataset.subject = key;
-        card.innerHTML = `
-          <span class="icon">${subj.icon}</span>
-          <div class="name">${subj.name}</div>
-          <div class="count">${count} chapters</div>
-          <span class="badge">${count > 0 ? '📖 Explore' : '📝 Coming soon'}</span>
-        `;
-        card.addEventListener('click', () => {
-          currentSubject = key;
-          navigateTo('subject', key);
-        });
-        grid.appendChild(card);
-      }
-      updateLangUI();
+  },
+  async loadProfile(){
+    if(!State.user) return null;
+    const snap = await getDoc(doc(db,'students',State.user.uid));
+    if(snap.exists()){
+      State.profile = snap.data();
+      State.isAdmin = State.profile.role === 'admin' || State.profile.role === 'teacher';
+    } else { State.profile = null; State.isAdmin = false; }
+    return State.profile;
+  },
+  async signupStudent({name, email, password, classId}){
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, {displayName:name});
+    await setDoc(doc(db,'students',cred.user.uid), {
+      uid: cred.user.uid, name, email, classId: classId||null,
+      role:'student', lang: State.lang, createdAt: serverTimestamp()
+    });
+    State.user = cred.user;
+    await this.loadProfile();
+    return cred.user;
+  },
+  async loginEmail(email, password){
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    State.user = cred.user;
+    await this.loadProfile();
+    return cred.user;
+  },
+  async loginGoogle(){
+    const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+    State.user = cred.user;
+    const snap = await getDoc(doc(db,'students',cred.user.uid));
+    if(!snap.exists()){
+      await setDoc(doc(db,'students',cred.user.uid), {
+        uid: cred.user.uid, name: cred.user.displayName || 'Student',
+        email: cred.user.email, classId:null, role:'student',
+        lang: State.lang, createdAt: serverTimestamp()
+      });
     }
+    await this.loadProfile();
+    return cred.user;
+  },
+  async logout(){ await signOut(auth); State.user=null; State.profile=null; State.isAdmin=false; }
+};
 
-    // ================================================================
-    //  RENDER: SUBJECT
-    // ================================================================
-
-    function renderSubject(subjectKey) {
-      const subj = appData.subjects[subjectKey];
-      if (!subj) { showToast('Subject not found!', 'error'); navigateTo('home'); return; }
-      $('#subjIcon').textContent = subj.icon;
-      $('#subjTitle').textContent = subj.name;
-      const list = $('#chapterList');
-      list.innerHTML = '';
-      if (!subj.chapters || subj.chapters.length === 0) {
-        list.innerHTML = `<div class="empty-state"><span class="icon">📭</span><p>No chapters added yet. <br>Go to <strong>Admin</strong> to add chapters.</p></div>`;
-      } else {
-        subj.chapters.forEach((ch, idx) => {
-          const item = document.createElement('div');
-          item.className = 'chapter-item';
-          const title = currentLang === 'hi' ? (ch.titleHi || ch.title) : ch.title;
-          const summary = currentLang === 'hi' ? (ch.summaryHi || ch.summary) : ch.summary;
-          item.innerHTML = `
-            <span class="num">Chapter ${idx+1}</span>
-            <h3>${title}</h3>
-            <p>${summary || 'Learn more.'}</p>
-            <div class="meta"><span class="status pending">📖 Start</span><span class="dot"></span><span>${ch.mcqs ? ch.mcqs.length : 0} MCQs</span></div>
-          `;
-          item.addEventListener('click', () => {
-            currentChapter = { subjectKey, chapterIndex: idx };
-            navigateTo('chapter', { subjectKey, chapterIndex: idx });
-          });
-          list.appendChild(item);
-        });
-      }
-      $('#subjBack').onclick = () => navigateTo('home');
-      updateLangUI();
+/* ======================= AI SERVICE (Direct Gemini API) ======================= */
+const AIService = {
+  async loadKey(){
+    try{
+      const snap = await getDoc(doc(db,'settings','ai'));
+      State.geminiKey = snap.exists() ? (snap.data().geminiKey || null) : null;
+    }catch(e){ State.geminiKey = null; }
+    return State.geminiKey;
+  },
+  async saveKey(key){
+    await setDoc(doc(db,'settings','ai'), { geminiKey: key, updatedAt: serverTimestamp() }, {merge:true});
+    State.geminiKey = key;
+  },
+  async callGemini(prompt, systemInstruction){
+    const key = State.geminiKey;
+    if(!key) throw new Error(t('aiKeyMissing'));
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+    const body = {
+      contents: [{ role:'user', parts:[{ text: prompt }] }],
+      ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {})
+    };
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if(!r.ok){
+      const txt = await r.text();
+      console.error('Gemini error', r.status, txt);
+      if(r.status === 400) throw new Error('Invalid AI key or request.');
+      if(r.status === 403) throw new Error('AI key rejected. Check API permissions.');
+      if(r.status === 429) throw new Error('AI rate limit. Try again in a minute.');
+      throw new Error('AI service unavailable ('+r.status+')');
     }
+    const data = await r.json();
+    return data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || '';
+  },
+  async ask({prompt, chapterContext, classLevel, lang}){
+    const sys = `You are SmartCampus AI, a friendly tutor for Class ${classLevel||'5'} students in India.
+- Answer at the student's level with simple language.
+- Preferred language: ${lang==='hi' ? 'Hindi (Devanagari)' : 'English'}.
+- If a chapter context is provided, base your answer primarily on it. Do not invent unrelated textbook content.
+- Use short paragraphs, bullet points where helpful. No markdown code fences.
+- Keep answers under 250 words unless the student asks for more detail.`;
+    const userPrompt = chapterContext
+      ? `Chapter content:\n"""\n${String(chapterContext).slice(0,8000)}\n"""\n\nStudent asks: ${prompt}`
+      : `Student asks: ${prompt}`;
+    return this.callGemini(userPrompt, sys);
+  },
+  async generate({pdfText, chapterTitle, subjectName, options}){
+    const mcqCount = Math.min(30, parseInt(options.mcqCount)||7);
+    const fillCount = Math.min(30, parseInt(options.fillCount)||7);
+    const qaCount = Math.min(30, parseInt(options.qaCount)||7);
+    const sys = `You are an expert curriculum writer for Class 1–10 (NCERT-style) education in India.
+Generate age-appropriate bilingual content strictly based on the provided PDF text.
+Return STRICT JSON only — no commentary, no markdown fences — matching this schema:
+{
+  "explanation": "<HTML string suitable for chapter Learn tab>",
+  "mcqs": [{ "q":"", "qHi":"", "opts":["","","",""], "optsHi":["","","",""], "ans":0, "explanation":"", "explanationHi":"" }],
+  "fills":[ { "q":"", "qHi":"", "ans":"", "hint":"", "hintHi":"" } ],
+  "qas":  [ { "q":"", "qHi":"", "a":"", "aHi":"" } ]
+}
+Rules:
+- Use ONLY information present in the source PDF. Do not invent unrelated content.
+- Every text field must have both English AND Hindi versions.
+- MCQ must have exactly 4 options, "ans" is 0-indexed correct option.
+- Fill-in-blank should contain "______" as the blank marker.`;
+    const user = `Subject: ${subjectName}
+Chapter: ${chapterTitle}
+Source PDF text (first 15000 chars):
+"""
+${String(pdfText).slice(0,15000)}
+"""
 
-    // ================================================================
-    //  RENDER: CHAPTER (with tabs)
-    // ================================================================
+Generate:
+- explanation: rich HTML (headings, paragraphs, highlight boxes, tables where useful)
+- ${mcqCount} MCQs
+- ${fillCount} Fill-in-the-Blanks
+- ${qaCount} Q&A
+Return ONLY valid JSON.`;
+    const raw = await this.callGemini(user, sys);
+    const cleaned = raw.replace(/^```json\s*/i,'').replace(/```$/,'').trim();
+    let parsed;
+    try{ parsed = JSON.parse(cleaned); }
+    catch(e){ console.error('AI non-JSON:', raw); throw new Error('AI returned invalid content.'); }
+    return {
+      explanation: parsed.explanation || '',
+      mcqs:  parsed.mcqs  || [],
+      fills: parsed.fills || [],
+      qas:   parsed.qas   || []
+    };
+  }
+};
 
-    function renderChapter(data) {
-      const { subjectKey, chapterIndex } = data;
-      const subj = appData.subjects[subjectKey];
-      if (!subj || !subj.chapters || chapterIndex >= subj.chapters.length) {
-        showToast('Chapter not found!', 'error');
-        navigateTo('home');
-        return;
-      }
-      const ch = subj.chapters[chapterIndex];
-      const container = $('#chapterView');
-      const num = chapterIndex + 1;
-      const title = currentLang === 'hi' ? (ch.titleHi || ch.title) : ch.title;
+/* ======================= STORAGE ======================= */
+const StorageService = {
+  async uploadPDF(file, {classId, subjectId, chapterId, onProgress}){
+    if(!file) throw new Error('No file selected');
+    if(file.type !== 'application/pdf') throw new Error('Only PDF files allowed');
+    if(file.size > 25*1024*1024) throw new Error('PDF must be under 25 MB');
+    const path = `chapters/${classId}/${subjectId}/${chapterId}/${Date.now()}_${file.name}`;
+    const r = sRef(storage, path);
+    const task = uploadBytesResumable(r, file, {contentType:'application/pdf'});
+    return new Promise((resolve,reject)=>{
+      task.on('state_changed',
+        s => onProgress && onProgress(Math.round((s.bytesTransferred/s.totalBytes)*100)),
+        reject,
+        async ()=>{ const url = await getDownloadURL(task.snapshot.ref); resolve({url, path}); }
+      );
+    });
+  }
+};
 
-      let html = `
-        <div class="ch-header">
-          <div class="info">
-            <span class="num">Chapter ${num} · ${subj.icon} ${subj.name}</span>
-            <h2>${title}</h2>
+/* ======================= AUTH PAGE ======================= */
+function renderAuth(){
+  const page = $('#page-auth');
+  page.innerHTML = `
+    <div style="max-width:440px;margin:20px auto;">
+      <div class="hero" style="padding:32px 28px;">
+        <div class="eyebrow">🇮🇳 ${esc(BRANDING.poweredBy)}</div>
+        <h1>Welcome to <span>SmartCampus AI</span></h1>
+        <p>AI-powered learning for Class 1–10. Learn, practice, quiz and ask AI — in Hindi & English.</p>
+      </div>
+      <div style="background:#fff;border:1px solid var(--gray-200);border-radius:16px;padding:24px;box-shadow:var(--shadow)">
+        <div class="chip-row" style="margin-bottom:18px">
+          <div class="chip active" data-mode="login">${t('login')}</div>
+          <div class="chip" data-mode="signup">${t('signup')}</div>
+        </div>
+        <form id="authForm">
+          <div class="form-group" id="nameGroup" style="display:none">
+            <label>${t('name')}</label>
+            <input type="text" id="authName" autocomplete="name" />
           </div>
-          <button class="back-btn" id="chBack">← Back</button>
-        </div>
-        <div class="ch-tabs" id="chTabs">
-          <button class="active" data-tab="learn">📖 Learn</button>
-          <button data-tab="practice">✏️ Practice</button>
-          <button data-tab="quiz">🎯 Quiz</button>
-          <button data-tab="qa">💬 Q&A</button>
-        </div>
-        <div class="ch-body" id="chBody">
-          <div class="tab-pane active" id="tab-learn">${ch.content || '<p>No content available.</p>'}</div>
-          <div class="tab-pane" id="tab-practice"></div>
-          <div class="tab-pane" id="tab-quiz"></div>
-          <div class="tab-pane" id="tab-qa"></div>
-        </div>
-      `;
-      container.innerHTML = html;
+          <div class="form-group" id="classGroup" style="display:none">
+            <label>${t('selectClass')}</label>
+            <select id="authClass"></select>
+          </div>
+          <div class="form-group">
+            <label>${t('email')}</label>
+            <input type="email" id="authEmail" required autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label>${t('password')}</label>
+            <input type="password" id="authPass" required minlength="6" autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn btn-primary w-full btn-lg" id="authSubmit">${t('login')}</button>
+        </form>
+        <button class="btn btn-secondary w-full mt-16" id="googleBtn">🔵 ${t('signInWithGoogle')}</button>
+        <div class="muted text-center mt-16" style="font-size:12px">${esc(BRANDING.poweredBy)}</div>
+      </div>
+    </div>`;
 
-      $('#chBack').onclick = () => navigateTo('subject', subjectKey);
+  const classSel = $('#authClass');
+  if(classSel){
+    classSel.innerHTML = (State.classes.length ? State.classes : CLASSES_SEED)
+      .map(c=> `<option value="${c.id}">${esc(State.lang==='hi'?c.nameHi:c.name)}</option>`).join('');
+  }
 
-      const tabs = container.querySelectorAll('.ch-tabs button');
-      const panes = {
-        learn: container.querySelector('#tab-learn'),
-        practice: container.querySelector('#tab-practice'),
-        quiz: container.querySelector('#tab-quiz'),
-        qa: container.querySelector('#tab-qa'),
+  let mode = 'login';
+  $$('#page-auth .chip').forEach(chip=>{
+    chip.onclick = ()=>{
+      $$('#page-auth .chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      mode = chip.dataset.mode;
+      $('#nameGroup').style.display  = mode==='signup' ? '' : 'none';
+      $('#classGroup').style.display = mode==='signup' ? '' : 'none';
+      $('#authSubmit').textContent   = mode==='signup' ? t('createAccount') : t('login');
+    };
+  });
+
+  $('#authForm').onsubmit = async (e)=>{
+    e.preventDefault();
+    const btn = $('#authSubmit'); btn.disabled = true; btn.textContent = t('pleaseWait');
+    try{
+      if(mode==='signup'){
+        await AuthService.signupStudent({
+          name: $('#authName').value.trim(),
+          email: $('#authEmail').value.trim(),
+          password: $('#authPass').value,
+          classId: $('#authClass').value
+        });
+        toast('🎉 Account created!', 'success');
+      } else {
+        await AuthService.loginEmail($('#authEmail').value.trim(), $('#authPass').value);
+        toast('✅ Welcome back!', 'success');
+      }
+      afterLogin();
+    }catch(err){
+      console.error(err);
+      const msg = err.code === 'auth/wrong-password' ? 'Wrong password'
+                : err.code === 'auth/user-not-found' ? 'Account not found'
+                : err.code === 'auth/email-already-in-use' ? 'Email already registered'
+                : err.code === 'auth/invalid-email' ? 'Invalid email'
+                : err.code === 'auth/weak-password' ? 'Password too weak (min 6 chars)'
+                : err.message || t('error');
+      toast(msg, 'error');
+    }finally{
+      btn.disabled = false;
+      btn.textContent = mode==='signup' ? t('createAccount') : t('login');
+    }
+  };
+
+  $('#googleBtn').onclick = async ()=>{
+    try{ await AuthService.loginGoogle(); afterLogin(); toast('✅ Signed in with Google','success'); }
+    catch(e){ toast(e.message||'Google sign-in failed','error'); }
+  };
+  setActive('auth');
+}
+
+/* ======================= HOME ======================= */
+function renderHome(){
+  const page = $('#page-home');
+  const name = State.profile?.name || 'Learner';
+  page.innerHTML = `
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="eyebrow">🇮🇳 ${esc(BRANDING.poweredBy)}</div>
+        <h1>${t('welcome')}, <span>${esc(name.split(' ')[0])}</span> 👋</h1>
+        <p>${esc(BRANDING.tagline)} — Learn, practice, quiz, and ask AI in Hindi or English.</p>
+        <div class="hero-actions">
+          <button class="btn btn-accent" id="heroDashboard">📊 ${t('dashboard')}</button>
+          <button class="btn btn-ghost" id="heroContinue">${t('continue')} →</button>
+        </div>
+      </div>
+    </div>
+    <div class="section-head"><h2>📚 ${t('selectClass')}</h2><span class="sub">1 – 10</span></div>
+    <div class="class-grid" id="classGrid"></div>`;
+
+  const grid = $('#classGrid');
+  const classes = State.classes.length ? State.classes : CLASSES_SEED;
+  grid.innerHTML = classes.map(c=>{
+    const label = State.lang==='hi' ? c.nameHi : c.name;
+    const num = label.replace(/[^0-9]/g,'') || c.order || '';
+    return `
+      <div class="class-card" data-id="${c.id}">
+        <div class="grade">${num}</div>
+        <div class="grade-label">${State.lang==='hi'?'कक्षा':'CLASS'}</div>
+        <div class="subjects">${esc(label)}</div>
+      </div>`;
+  }).join('');
+
+  $$('#classGrid .class-card').forEach(el=>{
+    el.onclick = ()=>{
+      State.currentClass = classes.find(c=>c.id===el.dataset.id);
+      renderSubjects();
+    };
+  });
+  $('#heroDashboard').onclick = ()=> renderDashboard();
+  $('#heroContinue').onclick = ()=>{
+    const last = State.profile?.classId || 'class-5';
+    State.currentClass = classes.find(c=>c.id===last) || classes[0];
+    renderSubjects();
+  };
+  setActive('home');
+}
+
+/* ======================= SUBJECTS ======================= */
+async function renderSubjects(){
+  const page = $('#page-subjects');
+  const cls = State.currentClass;
+  const clsName = State.lang==='hi' ? cls.nameHi : cls.name;
+  page.innerHTML = `
+    <div class="section-head">
+      <div>
+        <div class="muted" style="cursor:pointer" id="backHome">← ${t('home')}</div>
+        <h2 style="margin-top:4px">${esc(clsName)} — ${t('subjects')}</h2>
+      </div>
+    </div>
+    <div id="subjWrap"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
+  $('#backHome').onclick = ()=> renderHome();
+  setActive('subjects');
+  try{
+    const subs = await DataService.getSubjects(cls.id);
+    const wrap = $('#subjWrap');
+    if(!subs.length){
+      wrap.innerHTML = `<div class="empty"><div class="icon">📚</div><h3>${t('noSubjects')}</h3><p>Ask your teacher to add subjects for ${esc(clsName)}.</p></div>`;
+      return;
+    }
+    wrap.innerHTML = `<div class="subject-grid">${subs.map(s=>`
+      <div class="subject-card" data-id="${s.id}">
+        <span class="icon">${esc(s.icon||'📘')}</span>
+        <div class="name">${esc(State.lang==='hi'?(s.nameHi||s.name):s.name)}</div>
+        <div class="count">${esc(s.desc||'')}</div>
+      </div>`).join('')}</div>`;
+    $$('#subjWrap .subject-card').forEach(el=>{
+      el.onclick = ()=>{ State.currentSubject = subs.find(s=>s.id===el.dataset.id); renderChapters(); };
+    });
+  }catch(e){
+    console.error(e);
+    $('#subjWrap').innerHTML = `<div class="empty"><div class="icon">⚠️</div><h3>Could not load subjects</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+/* ======================= CHAPTERS ======================= */
+async function renderChapters(){
+  const sub = State.currentSubject;
+  const cls = State.currentClass;
+  const subName = State.lang==='hi'?(sub.nameHi||sub.name):sub.name;
+  const page = $('#page-chapters');
+  page.innerHTML = `
+    <div class="section-head">
+      <div>
+        <div class="muted" style="cursor:pointer" id="backSubj">← ${esc(State.lang==='hi'?cls.nameHi:cls.name)} / ${t('subjects')}</div>
+        <h2 style="margin-top:4px">${esc(sub.icon||'📘')} ${esc(subName)}</h2>
+      </div>
+    </div>
+    <div id="chWrap"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
+  $('#backSubj').onclick = ()=> renderSubjects();
+  setActive('chapters');
+  try{
+    const chapters = await DataService.getChapters(sub.id);
+    const wrap = $('#chWrap');
+    if(!chapters.length){
+      wrap.innerHTML = `<div class="empty"><div class="icon">📭</div><h3>${t('noChapters')}</h3><p>Ask admin to add chapters for this subject.</p></div>`;
+      return;
+    }
+    wrap.innerHTML = `<div class="chapter-list">${chapters.map((c,i)=>`
+      <div class="chapter-card" data-id="${c.id}">
+        <span class="tag">${t('chapter')} ${c.number ?? (i+1)}</span>
+        <h3>${esc(State.lang==='hi'?(c.titleHi||c.title):c.title)}</h3>
+        <p class="desc">${esc(State.lang==='hi'?(c.summaryHi||c.summary||''):(c.summary||''))}</p>
+        <div class="meta"><span>📝 ${(c.mcqCount||0)} MCQ</span><span class="dot"></span><span>💬 ${(c.qaCount||0)} Q&A</span></div>
+      </div>`).join('')}</div>`;
+    $$('#chWrap .chapter-card').forEach(el=>{
+      el.onclick = async ()=>{
+        State.currentChapter = chapters.find(c=>c.id===el.dataset.id);
+        await renderChapter();
       };
+    });
+  }catch(e){
+    console.error(e);
+    $('#chWrap').innerHTML = `<div class="empty"><div class="icon">⚠️</div><h3>Could not load chapters</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
 
-      tabs.forEach(btn => {
-        btn.addEventListener('click', () => {
-          tabs.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          const tab = btn.dataset.tab;
-          Object.values(panes).forEach(p => p.classList.remove('active'));
-          if (panes[tab]) panes[tab].classList.add('active');
-          if (tab === 'practice') renderPracticeTab(ch, panes.practice);
-          if (tab === 'quiz') renderQuizTab(ch, panes.quiz);
-          if (tab === 'qa') renderQATab(ch, panes.qa);
-        });
-      });
+/* ======================= CHAPTER VIEW ======================= */
+async function renderChapter(){
+  const ch = State.currentChapter;
+  const sub = State.currentSubject;
+  const cls = State.currentClass;
+  const title = State.lang==='hi'?(ch.titleHi||ch.title):ch.title;
+  const page = $('#page-chapter');
+  page.innerHTML = `
+    <div class="chapter-view">
+      <div class="ch-header">
+        <div class="crumb" id="chBack">← ${esc(State.lang==='hi'?cls.nameHi:cls.name)} / ${esc(State.lang==='hi'?(sub.nameHi||sub.name):sub.name)}</div>
+        <h2>${esc(sub.icon||'📘')} ${esc(title)}</h2>
+        <div class="subtitle">${esc(State.lang==='hi'?(ch.summaryHi||ch.summary||''):(ch.summary||''))}</div>
+      </div>
+      <div class="ch-tabs" id="chTabs">
+        <button class="active" data-tab="learn">📖 ${t('learn')}</button>
+        <button data-tab="practice">✏️ ${t('practice')}</button>
+        <button data-tab="quiz">🎯 ${t('quiz')}</button>
+        <button data-tab="qa">💬 ${t('qa')}</button>
+        <button data-tab="ai">🤖 ${t('aiAsk')}</button>
+      </div>
+      <div class="ch-body" id="chBody"></div>
+    </div>`;
+  $('#chBack').onclick = ()=> renderChapters();
+  setActive('chapter');
 
-      // Initial render of non-learn tabs
-      renderPracticeTab(ch, panes.practice);
-      renderQuizTab(ch, panes.quiz);
-      renderQATab(ch, panes.qa);
-      updateLangUI();
-    }
+  let questions = {mcq:[],fill:[],qa:[]};
+  try{ questions = await DataService.getQuestions(ch.id); }
+  catch(e){ console.warn('questions load failed', e); }
 
-    // ----- Practice Tab -----
-    function renderPracticeTab(ch, container) {
-      if (!container) return;
-      let html = `
-        <div class="score-banner"><span class="score-label">📊 Practice Score</span><span class="score-num" id="practiceScore">0%</span></div>
-      `;
-      if (ch.mcqs && ch.mcqs.length) {
-        html += `<h4 style="margin-bottom:12px;">📝 Multiple Choice Questions</h4>`;
-        ch.mcqs.forEach((mcq, idx) => {
-          const qText = currentLang === 'hi' ? (mcq.qHi || mcq.q) : mcq.q;
-          html += `
-            <div class="question-item" data-mcq="${idx}">
-              <div class="q-text">${idx+1}. ${qText}</div>
-              <div class="options">
-                ${mcq.opts.map((opt, oi) => `
-                  <label><input type="radio" name="mcq_${idx}" value="${oi}" data-mcq-idx="${idx}"> ${opt}</label>
-                `).join('')}
-              </div>
-              <div class="result-badge pending" id="mcqResult_${idx}">⬜ Not attempted</div>
-            </div>
-          `;
-        });
-      }
-      if (ch.fills && ch.fills.length) {
-        html += `<h4 style="margin:20px 0 12px;">✍️ Fill in the Blanks</h4>`;
-        ch.fills.forEach((fill, idx) => {
-          const qText = currentLang === 'hi' ? (fill.qHi || fill.q) : fill.q;
-          html += `
-            <div class="fill-item" data-fill="${idx}">
-              <div class="q-text">${qText}</div>
-              <input type="text" placeholder="Type answer..." data-fill-idx="${idx}" />
-              <div class="fill-result" id="fillResult_${idx}"></div>
-            </div>
-          `;
-        });
-      }
-      html += `<div class="btn-group"><button class="btn-primary" id="checkPractice">✅ Check Answers</button><button class="btn-secondary" id="resetPractice">🔄 Reset</button></div>`;
-      container.innerHTML = html;
+  State.chatContext = {
+    classId: cls.id, subjectId: sub.id, chapterId: ch.id,
+    chapterTitle: title, chapterContent: ch.content || ''
+  };
+  $('#chatStatus').textContent = `Chapter: ${title}`;
 
-      // Auto-check on radio change
-      container.querySelectorAll('input[type="radio"]').forEach(el => {
-        el.addEventListener('change', () => {
-          const idx = parseInt(el.dataset.mcqIdx);
-          const mcq = ch.mcqs[idx];
-          const result = container.querySelector(`#mcqResult_${idx}`);
-          if (result) {
-            const selected = parseInt(el.value);
-            result.className = `result-badge ${selected === mcq.ans ? 'correct' : 'wrong'}`;
-            result.textContent = selected === mcq.ans ? '✅ Correct!' : '❌ Wrong!';
-          }
-          updatePracticeScore(ch, container);
-        });
-      });
+  const body = $('#chBody');
+  const tabs = $$('#chTabs button');
+  function renderTab(name){
+    tabs.forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+    if(name==='learn')    body.innerHTML = renderLearn(ch);
+    if(name==='practice') body.innerHTML = renderPractice(ch, questions);
+    if(name==='quiz')     body.innerHTML = renderQuiz(ch, questions);
+    if(name==='qa')       body.innerHTML = renderQa(ch, questions);
+    if(name==='ai')       body.innerHTML = renderAIAsk(ch);
+    if(name==='practice') wirePractice(ch, questions);
+    if(name==='quiz')     wireQuiz(ch, questions);
+    if(name==='ai')       wireAIAsk(ch);
+  }
+  tabs.forEach(b=> b.onclick = ()=> renderTab(b.dataset.tab));
+  renderTab('learn');
+}
 
-      container.querySelectorAll('.fill-item input').forEach(inp => {
-        inp.addEventListener('blur', () => {
-          const idx = parseInt(inp.dataset.fillIdx);
-          const fill = ch.fills[idx];
-          const result = container.querySelector(`#fillResult_${idx}`);
-          if (result) {
-            if (inp.value.trim().toLowerCase() === fill.ans.toLowerCase()) {
-              result.innerHTML = `✅ Correct! <span class="ans">${fill.ans}</span>`;
-              result.style.color = '#16a34a';
-            } else if (inp.value.trim()) {
-              result.innerHTML = `❌ Try again. Hint: <span class="wrong-ans">${fill.ans}</span>`;
-              result.style.color = '#dc2626';
-            } else {
-              result.innerHTML = '';
-            }
-          }
-          updatePracticeScore(ch, container);
-        });
-      });
+function renderLearn(ch){
+  const content = State.lang==='hi' ? (ch.contentHi || ch.content) : ch.content;
+  let html = `<div class="content-block">${content || '<p class="muted">No content available yet.</p>'}</div>`;
+  if(ch.pdfUrl){
+    html += `
+      <div class="section-head" style="margin-top:24px"><h2>📄 ${t('pdf')}</h2></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn btn-primary" href="${esc(ch.pdfUrl)}" target="_blank" rel="noopener">${t('openPdf')} ↗</a>
+        <a class="btn btn-secondary" href="${esc(ch.pdfUrl)}" download>⬇ Download</a>
+      </div>
+      <iframe class="pdf-viewer mt-16" src="${esc(ch.pdfUrl)}" loading="lazy"></iframe>`;
+  }
+  return html;
+}
 
-      container.querySelector('#checkPractice')?.addEventListener('click', () => {
-        container.querySelectorAll('.fill-item input').forEach(inp => inp.dispatchEvent(new Event('blur')));
-        container.querySelectorAll('input[type="radio"]:checked').forEach(el => el.dispatchEvent(new Event('change')));
-        ch.mcqs.forEach((mcq, idx) => {
-          const result = container.querySelector(`#mcqResult_${idx}`);
-          const checked = container.querySelector(`input[name="mcq_${idx}"]:checked`);
-          if (!checked && result) {
-            result.className = 'result-badge wrong';
-            result.textContent = '❌ Not attempted!';
-          }
-        });
-        updatePracticeScore(ch, container);
-        showToast('✅ Practice checked!', 'success');
-      });
-
-      container.querySelector('#resetPractice')?.addEventListener('click', () => {
-        container.querySelectorAll('input[type="radio"]').forEach(el => {
-          el.checked = false;
-          const idx = parseInt(el.dataset.mcqIdx);
-          const result = container.querySelector(`#mcqResult_${idx}`);
-          if (result) { result.className = 'result-badge pending';
-            result.textContent = '⬜ Not attempted'; }
-        });
-        container.querySelectorAll('.fill-item input').forEach(inp => {
-          inp.value = '';
-          const idx = parseInt(inp.dataset.fillIdx);
-          const result = container.querySelector(`#fillResult_${idx}`);
-          if (result) result.innerHTML = '';
-        });
-        updatePracticeScore(ch, container);
-        showToast('🔄 Reset complete!', 'info');
-      });
-    }
-
-    function updatePracticeScore(ch, container) {
-      const mcqItems = container.querySelectorAll('.question-item');
-      let correct = 0;
-      let total = ch.mcqs ? ch.mcqs.length : 0;
-      mcqItems.forEach((item, idx) => {
-        const result = container.querySelector(`#mcqResult_${idx}`);
-        if (result && result.classList.contains('correct')) correct++;
-      });
-      const fillItems = container.querySelectorAll('.fill-item');
-      let fillCorrect = 0;
-      fillItems.forEach((item, idx) => {
-        const result = container.querySelector(`#fillResult_${idx}`);
-        if (result && result.innerHTML.includes('✅')) fillCorrect++;
-      });
-      const totalFills = ch.fills ? ch.fills.length : 0;
-      const totalQ = total + totalFills;
-      const totalCorrect = correct + fillCorrect;
-      const score = totalQ > 0 ? Math.round((totalCorrect / totalQ) * 100) : 0;
-      const scoreEl = container.querySelector('#practiceScore');
-      if (scoreEl) scoreEl.textContent = score + '%';
-    }
-
-    // ----- Quiz Tab -----
-    let quizState = { questions: [], current: 0, score: 0, answered: false };
-
-    function renderQuizTab(ch, container) {
-      if (!container) return;
-      const shuffled = ch.mcqs ? shuffleArray([...ch.mcqs]) : [];
-      const selected = shuffled.slice(0, Math.min(5, shuffled.length));
-      quizState.questions = selected;
-      quizState.current = 0;
-      quizState.score = 0;
-      quizState.answered = false;
-
-      let html = `
-        <div class="score-banner"><span class="score-label">🎯 Quiz Score</span><span class="score-num" id="quizScore">0 / ${selected.length}</span></div>
-        <div id="quizContainer"></div>
-        <div class="btn-group"><button class="btn-success" id="nextQuiz">Next →</button><button class="btn-secondary" id="resetQuiz">🔄 Restart Quiz</button></div>
-      `;
-      container.innerHTML = html;
-      renderQuizQuestion(0, container);
-
-      container.querySelector('#nextQuiz')?.addEventListener('click', () => {
-        if (!quizState.answered) { showToast('⚠️ Please answer the question first!', 'error'); return; }
-        if (quizState.current < quizState.questions.length - 1) {
-          quizState.current++;
-          renderQuizQuestion(quizState.current, container);
-        } else {
-          showToast('🎉 Quiz complete! Score: ' + quizState.score + '/' + quizState.questions.length, 'success');
-          container.querySelector('#nextQuiz').disabled = true;
-        }
-      });
-
-      container.querySelector('#resetQuiz')?.addEventListener('click', () => {
-        renderQuizTab(ch, container);
-        showToast('🔄 Quiz restarted!', 'info');
-      });
-    }
-
-    function renderQuizQuestion(idx, container) {
-      const qs = quizState.questions;
-      if (idx >= qs.length) {
-        const qc = container.querySelector('#quizContainer');
-        if (qc) qc.innerHTML = `<div style="padding:30px;text-align:center;font-size:20px;font-weight:700;color:#16a34a;">🎉 Quiz Complete! Score: ${quizState.score}/${qs.length}</div>`;
-        return;
-      }
-      const q = qs[idx];
-      const qText = currentLang === 'hi' ? (q.qHi || q.q) : q.q;
-      quizState.answered = false;
-      let html = `
-        <div class="question-item" style="background:#fff;border:2px solid #2563eb;">
-          <div class="q-text" style="font-size:18px;">${idx+1}. ${qText}</div>
-          <div class="options">
-            ${q.opts.map((opt, oi) => `<label><input type="radio" name="quiz_q" value="${oi}" data-quiz-idx="${idx}"> ${opt}</label>`).join('')}
-          </div>
-          <div id="quizFeedback" style="margin-top:8px;font-weight:600;font-size:15px;"></div>
+function renderPractice(ch, qs){
+  const mcqs = qs.mcq || [], fills = qs.fill || [];
+  if(!mcqs.length && !fills.length){
+    return `<div class="empty"><div class="icon">📝</div><h3>No practice questions yet</h3><p>Ask admin to add questions.</p></div>`;
+  }
+  let html = `<div class="score-banner"><span class="label">📊 ${t('practice')}</span><span class="value" id="pracScore">0%</span></div>`;
+  if(mcqs.length){
+    html += `<h4 style="margin-bottom:12px">📝 MCQ</h4>`;
+    html += mcqs.map((q,i)=>`
+      <div class="question-item" data-mcq="${i}">
+        <div class="q-text">${i+1}. ${esc(State.lang==='hi'?(q.qHi||q.q):q.q)}</div>
+        <div class="options">
+          ${(State.lang==='hi'? (q.optsHi||q.opts): q.opts).map((o,oi)=>`
+            <label><input type="radio" name="m${i}" value="${oi}" data-idx="${i}"> ${esc(o)}</label>
+          `).join('')}
         </div>
-      `;
-      const qc = container.querySelector('#quizContainer');
-      if (qc) qc.innerHTML = html;
+        <div class="fb-slot" data-fb="${i}"></div>
+      </div>`).join('');
+  }
+  if(fills.length){
+    html += `<h4 style="margin:20px 0 12px">✍️ Fill in the Blanks</h4>`;
+    html += fills.map((q,i)=>`
+      <div class="fill-item" data-fill="${i}">
+        <div class="q-text">${esc(State.lang==='hi'?(q.qHi||q.q):q.q)}</div>
+        <input type="text" data-fidx="${i}" placeholder="Type answer..." />
+        <div class="fb-slot" data-ffb="${i}"></div>
+      </div>`).join('');
+  }
+  html += `<div class="flex gap-12 mt-24" style="flex-wrap:wrap">
+    <button class="btn btn-primary" id="checkBtn">✅ ${t('checkAnswers')}</button>
+    <button class="btn btn-secondary" id="resetBtn">🔄 ${t('reset')}</button>
+  </div>`;
+  return html;
+}
+function wirePractice(ch, qs){
+  const mcqs = qs.mcq || [], fills = qs.fill || [];
+  const body = $('#chBody');
+  const update = ()=>{
+    let correct = 0, total = mcqs.length + fills.length;
+    mcqs.forEach((q,i)=>{
+      const sel = body.querySelector(`input[name="m${i}"]:checked`);
+      if(sel && parseInt(sel.value)===q.ans) correct++;
+    });
+    fills.forEach((q,i)=>{
+      const inp = body.querySelector(`input[data-fidx="${i}"]`);
+      if(inp && inp.value.trim().toLowerCase() === String(q.ans||'').trim().toLowerCase()) correct++;
+    });
+    $('#pracScore').textContent = total ? Math.round((correct/total)*100)+'%' : '0%';
+  };
+  mcqs.forEach((q,i)=>{
+    body.querySelectorAll(`input[name="m${i}"]`).forEach(el=>{
+      el.onchange = ()=>{
+        const sel = parseInt(el.value), correct = sel === q.ans;
+        const fb = body.querySelector(`.question-item[data-mcq="${i}"] .fb-slot`);
+        fb.className = `fb-slot feedback ${correct?'correct':'wrong'}`;
+        fb.textContent = correct ? '✅ '+t('correct') : '❌ '+t('wrong');
+        update();
+      };
+    });
+  });
+  fills.forEach((q,i)=>{
+    const inp = body.querySelector(`input[data-fidx="${i}"]`);
+    inp.oninput = ()=>{
+      const correct = inp.value.trim().toLowerCase() === String(q.ans||'').trim().toLowerCase();
+      const fb = body.querySelector(`.fill-item[data-fill="${i}"] .fb-slot`);
+      if(!inp.value.trim()){ fb.textContent=''; fb.className='fb-slot'; }
+      else { fb.className = `fb-slot feedback ${correct?'correct':'wrong'}`; fb.textContent = correct ? '✅ '+t('correct') : '❌ '+t('wrong'); }
+      update();
+    };
+  });
+  $('#checkBtn').onclick = ()=>{ update(); toast('✅ '+t('checkAnswers'),'success'); };
+  $('#resetBtn').onclick = ()=>{
+    body.querySelectorAll('input[type="radio"]').forEach(el=>el.checked=false);
+    body.querySelectorAll('input[type="text"]').forEach(el=>el.value='');
+    body.querySelectorAll('.fb-slot').forEach(el=>{el.textContent='';el.className='fb-slot';});
+    update(); toast('🔄 '+t('reset'),'info');
+  };
+}
 
-      qc?.querySelectorAll('input[type="radio"]').forEach(el => {
-        el.addEventListener('change', () => {
-          if (quizState.answered) return;
-          const selected = parseInt(el.value);
-          const isCorrect = selected === q.ans;
-          quizState.answered = true;
-          if (isCorrect) quizState.score++;
-          const fb = qc.querySelector('#quizFeedback');
-          if (fb) {
-            fb.textContent = isCorrect ? '✅ Correct!' : '❌ Wrong. Answer: ' + q.opts[q.ans];
-            fb.style.color = isCorrect ? '#16a34a' : '#dc2626';
-          }
-          qc.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
-          const scoreEl = container.querySelector('#quizScore');
-          if (scoreEl) scoreEl.textContent = `${quizState.score} / ${quizState.questions.length}`;
-          const nextBtn = container.querySelector('#nextQuiz');
-          if (nextBtn) nextBtn.disabled = false;
-        });
-      });
-      const nextBtn = container.querySelector('#nextQuiz');
-      if (nextBtn) nextBtn.disabled = true;
-      const scoreEl = container.querySelector('#quizScore');
-      if (scoreEl) scoreEl.textContent = `${quizState.score} / ${quizState.questions.length}`;
-    }
+function renderQuiz(ch, qs){
+  const mcqs = qs.mcq || [];
+  if(!mcqs.length){
+    return `<div class="empty"><div class="icon">🎯</div><h3>No quiz questions yet</h3><p>Add MCQs to enable the quiz.</p></div>`;
+  }
+  const pool = shuffle(mcqs).slice(0, Math.min(10, mcqs.length));
+  return `
+    <div class="score-banner"><span class="label">🎯 ${t('quiz')}</span><span class="value" id="quizScore">0 / ${pool.length}</span></div>
+    <div id="quizBody"></div>
+    <div class="flex gap-12 mt-24" style="flex-wrap:wrap">
+      <button class="btn btn-success" id="quizNext" disabled>${t('next')} →</button>
+      <button class="btn btn-secondary" id="quizRestart">🔄 ${t('restart')}</button>
+    </div>`;
+}
+function wireQuiz(ch, qs){
+  const mcqs = qs.mcq || [];
+  const pool = shuffle(mcqs).slice(0, Math.min(10, mcqs.length));
+  let idx = 0, score = 0, answered = false;
+  const body = $('#quizBody');
 
-    // ----- Q&A Tab -----
-    function renderQATab(ch, container) {
-      if (!container) return;
-      let html = `<h4 style="margin-bottom:12px;">💬 Questions & Answers</h4>`;
-      if (ch.qa && ch.qa.length) {
-        ch.qa.forEach((qa, idx) => {
-          const qText = currentLang === 'hi' ? (qa.qHi || qa.q) : qa.q;
-          html += `<div class="qa-item"><div class="q">❓ ${qText}</div><div class="a"><span class="label">💡 Answer:</span> ${qa.a}</div></div>`;
-        });
-      } else {
-        html += `<p style="color:var(--gray-500);">No Q&A available.</p>`;
-      }
-      container.innerHTML = html;
-    }
-
-    // ================================================================
-    //  ADMIN PANEL
-    // ================================================================
-
-    const ADMIN_PASSWORD = 'admin123';
-
-    function renderAdmin() {
-      const container = $('#adminContent');
-      if (!adminLoggedIn) {
-        container.innerHTML = `
-          <div class="admin-login">
-            <h2>🔐 Admin Login</h2>
-            <p>Enter password to manage chapters</p>
-            <label>Password</label>
-            <input type="password" id="adminPass" placeholder="Enter password..." />
-            <div class="error" id="loginError">Incorrect password. Try again.</div>
-            <button class="btn-primary w-full" id="adminLoginBtn">Login</button>
-          </div>
-        `;
-        const loginBtn = container.querySelector('#adminLoginBtn');
-        const passInput = container.querySelector('#adminPass');
-        const errorEl = container.querySelector('#loginError');
-        errorEl.style.display = 'none';
-
-        const doLogin = () => {
-          if (passInput.value === ADMIN_PASSWORD) {
-            adminLoggedIn = true;
-            renderAdmin();
-            showToast('✅ Logged in as Admin', 'success');
-          } else {
-            errorEl.style.display = 'block';
-            passInput.value = '';
-            passInput.focus();
-          }
-        };
-        loginBtn.addEventListener('click', doLogin);
-        passInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
-        return;
-      }
-
-      // Logged in
-      container.innerHTML = `
-        <div class="admin-panel">
-          <div class="admin-header">
-            <h2>🛠️ Admin Panel</h2>
-            <div>
-              <button class="btn-secondary" id="adminLogout">🚪 Logout</button>
-              <button class="btn-primary" id="adminAddBtn">➕ Add Chapter</button>
-            </div>
-          </div>
-          <div class="admin-body">
-            <div class="filters">
-              <select id="adminSubjectFilter">
-                <option value="all">All Subjects</option>
-                ${Object.values(appData.subjects).map(s => `<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
-              </select>
-              <input type="text" id="adminSearch" placeholder="Search chapters..." />
-            </div>
-            <div id="adminChapterList" class="admin-chapter-list"></div>
-            <div id="adminForm" class="admin-form"></div>
-          </div>
+  function draw(){
+    if(idx >= pool.length){ finish(); return; }
+    const q = pool[idx];
+    answered = false;
+    $('#quizNext').disabled = true;
+    body.innerHTML = `
+      <div class="question-item">
+        <div class="q-text">${idx+1}. ${esc(State.lang==='hi'?(q.qHi||q.q):q.q)}</div>
+        <div class="options">
+          ${(State.lang==='hi'?(q.optsHi||q.opts):q.opts).map((o,oi)=>`
+            <label><input type="radio" name="quiz" value="${oi}"> ${esc(o)}</label>
+          `).join('')}
         </div>
-      `;
+        <div class="fb-slot" id="qFb"></div>
+      </div>`;
+    body.querySelectorAll('input[name="quiz"]').forEach(el=>{
+      el.onchange = ()=>{
+        if(answered) return;
+        answered = true;
+        const sel = parseInt(el.value), correct = sel===q.ans;
+        if(correct) score++;
+        const fb = $('#qFb');
+        fb.className = `fb-slot feedback ${correct?'correct':'wrong'}`;
+        fb.textContent = correct ? '✅ '+t('correct') : `❌ ${t('wrong')} — ${esc((State.lang==='hi'?(q.optsHi||q.opts):q.opts)[q.ans])}`;
+        body.querySelectorAll('input[name="quiz"]').forEach(r=>r.disabled=true);
+        $('#quizScore').textContent = `${score} / ${pool.length}`;
+        $('#quizNext').disabled = false;
+      };
+    });
+  }
+  async function finish(){
+    const total = pool.length;
+    const percent = Math.round((score/total)*100);
+    body.innerHTML = `
+      <div class="empty" style="border-style:solid;border-color:var(--primary-light);">
+        <div class="icon">🎉</div>
+        <h3 style="font-size:20px;color:var(--primary)">${t('quizComplete')}</h3>
+        <p style="font-size:16px;margin:8px 0">${t('yourScore')}: <strong>${score} / ${total}</strong></p>
+        <p style="font-size:22px;font-weight:800;color:var(--accent)">${percent}%</p>
+        <button class="btn btn-primary mt-16" id="goDash">${t('viewDashboard')}</button>
+      </div>`;
+    $('#goDash').onclick = ()=> renderDashboard();
+    $('#quizNext').disabled = true;
+    try{
+      if(State.user){
+        await addDoc(collection(db,'quizResults'), {
+          studentId: State.user.uid, studentName: State.profile?.name || '',
+          classId: State.currentClass.id, subjectId: State.currentSubject.id,
+          chapterId: State.currentChapter.id,
+          score, total, percentage: percent,
+          completedAt: serverTimestamp()
+        });
+        await addDoc(collection(db,'progress'), {
+          studentId: State.user.uid, classId: State.currentClass.id,
+          subjectId: State.currentSubject.id, chapterId: State.currentChapter.id,
+          activityType:'quiz', score, totalQuestions: total,
+          percentage: percent, timestamp: serverTimestamp()
+        });
+      }
+    }catch(e){ console.warn('progress save failed', e); }
+  }
+  $('#quizNext').onclick = ()=>{ idx++; draw(); };
+  $('#quizRestart').onclick = ()=> renderChapter();
+  draw();
+}
 
-      container.querySelector('#adminLogout').addEventListener('click', () => {
-        adminLoggedIn = false;
-        renderAdmin();
-        showToast('👋 Logged out', 'info');
+function renderQa(ch, qs){
+  const list = qs.qa || [];
+  if(!list.length){
+    return `<div class="empty"><div class="icon">💬</div><h3>No Q&A yet</h3><p>Questions and answers will appear here.</p></div>`;
+  }
+  return `<h4 style="margin-bottom:12px">💬 ${t('qa')}</h4>` + list.map(q=>`
+    <div class="qa-item">
+      <div class="q">❓ ${esc(State.lang==='hi'?(q.qHi||q.q):q.q)}</div>
+      <div class="a">${esc(State.lang==='hi'?(q.aHi||q.a):q.a)}</div>
+    </div>`).join('');
+}
+
+function renderAIAsk(ch){
+  return `
+    <div class="section-head"><h2>🤖 ${t('askAI')}</h2></div>
+    <p class="muted" style="margin-bottom:12px">Ask anything about <strong>${esc(State.lang==='hi'?(ch.titleHi||ch.title):ch.title)}</strong>. Responses are grounded in this chapter.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="chip" data-p="Explain this chapter in simple words.">💡 Explain simply</button>
+      <button class="chip" data-p="इस अध्याय को हिंदी में समझाइए।">🇮🇳 हिंदी में समझाएँ</button>
+      <button class="chip" data-p="Give me a real-life example.">🌍 Real-life example</button>
+      <button class="chip" data-p="Ask me 5 practice questions.">🎯 Quiz me</button>
+    </div>
+    <textarea id="aiQ" style="width:100%;min-height:90px;padding:12px;border:1px solid var(--gray-300);border-radius:12px" placeholder="${t('askPlaceholder')}"></textarea>
+    <button class="btn btn-primary mt-8" id="aiAskBtn">✨ ${t('askAI')}</button>
+    <div id="aiAnswer" class="mt-16" style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:16px;min-height:60px;font-size:14px;line-height:1.7;white-space:pre-wrap"></div>`;
+}
+function wireAIAsk(ch){
+  const btn = $('#aiAskBtn');
+  const box = $('#aiAnswer');
+  $$('#page-chapter .chip').forEach(c=> c.onclick = ()=> $('#aiQ').value = c.dataset.p);
+  btn.onclick = async ()=>{
+    const prompt = $('#aiQ').value.trim();
+    if(!prompt){ toast('Please type a question','error'); return; }
+    if(!State.geminiKey){ toast(t('aiKeyMissing'),'error'); return; }
+    btn.disabled = true; btn.textContent = '⏳ Thinking...';
+    box.textContent = '';
+    try{
+      const answer = await AIService.ask({
+        prompt,
+        chapterContext: ch.content || ch.summary || '',
+        classLevel: State.currentClass?.id,
+        lang: State.lang
       });
+      box.textContent = answer;
+    }catch(e){
+      box.innerHTML = `<span style="color:var(--danger)">⚠️ ${esc(e.message)}</span>`;
+    }finally{
+      btn.disabled = false; btn.textContent = '✨ '+t('askAI');
+    }
+  };
+}
 
-      container.querySelector('#adminAddBtn').addEventListener('click', () => {
-        showAdminForm(null);
-      });
-
-      const filter = container.querySelector('#adminSubjectFilter');
-      const search = container.querySelector('#adminSearch');
-      filter.addEventListener('change', renderAdminList);
-      search.addEventListener('input', renderAdminList);
-
-      renderAdminList();
-
-      function renderAdminList() {
-        const list = container.querySelector('#adminChapterList');
-        const filterVal = filter.value;
-        const searchVal = search.value.toLowerCase().trim();
-
-        let items = [];
-        for (const [key, subj] of Object.entries(appData.subjects)) {
-          if (filterVal !== 'all' && filterVal !== key) continue;
-          if (subj.chapters) {
-            subj.chapters.forEach((ch, idx) => {
-              const title = ch.title || 'Untitled';
-              if (searchVal && !title.toLowerCase().includes(searchVal)) return;
-              items.push({ subjectKey: key, subjectName: subj.name, subjectIcon: subj.icon, chapterIndex: idx,
-                chapter: ch });
-            });
-          }
-        }
-
-        if (items.length === 0) {
-          list.innerHTML = `<div class="empty-state"><span class="icon">📭</span><p>No chapters found.</p></div>`;
-          return;
-        }
-
-        list.innerHTML = items.map(item => `
-          <div class="admin-chapter-item">
+/* ======================= DASHBOARD ======================= */
+async function renderDashboard(){
+  const page = $('#page-dashboard');
+  const name = State.profile?.name || 'Student';
+  const clsId = State.profile?.classId || 'class-5';
+  const cls = (State.classes.find(c=>c.id===clsId)) || {name:'Class', nameHi:'कक्षा'};
+  page.innerHTML = `
+    <div class="hero" style="padding:28px 26px">
+      <div class="hero-inner">
+        <div class="eyebrow">📊 ${t('dashboard')}</div>
+        <h1>Hi <span>${esc(name.split(' ')[0])}</span> 👋</h1>
+        <p>${esc(State.lang==='hi'?cls.nameHi:cls.name)}</p>
+        <div class="hero-actions">
+          <button class="btn btn-accent" id="continueBtn">${t('continue')} →</button>
+          <button class="btn btn-ghost" id="homeBtn">🏠 ${t('home')}</button>
+        </div>
+      </div>
+    </div>
+    <div id="dashBody"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
+  $('#continueBtn').onclick = ()=>{ State.currentClass = State.classes.find(c=>c.id===clsId)||State.classes[0]; renderSubjects(); };
+  $('#homeBtn').onclick = ()=> renderHome();
+  setActive('dashboard');
+  try{
+    if(!State.user){ $('#dashBody').innerHTML = ''; return; }
+    const snap = await getDocs(query(
+      collection(db,'progress'),
+      where('studentId','==',State.user.uid),
+      orderBy('timestamp','desc'),
+      limit(100)
+    ));
+    const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const bySubject = {};
+    items.forEach(it=>{
+      if(!bySubject[it.subjectId]) bySubject[it.subjectId] = {scores:[], count:0};
+      bySubject[it.subjectId].scores.push(it.percentage||0);
+      bySubject[it.subjectId].count++;
+    });
+    const subNames = {};
+    try{
+      const subs = await DataService.getSubjects(clsId);
+      subs.forEach(s=> subNames[s.id] = State.lang==='hi'?(s.nameHi||s.name):s.name);
+    }catch(e){}
+    const rows = Object.entries(bySubject).map(([sid, agg])=>{
+      const avg = Math.round(agg.scores.reduce((a,b)=>a+b,0) / agg.scores.length);
+      return {name: subNames[sid]||sid, avg, count: agg.count};
+    }).sort((a,b)=>b.avg-a.avg);
+    const recent = items.slice(0,6);
+    $('#dashBody').innerHTML = `
+      <div class="section-head"><h2>📈 ${t('progress')}</h2></div>
+      ${rows.length ? rows.map(r=>`
+        <div style="background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:14px 18px;margin-bottom:10px">
+          <div class="flex justify-between items-center" style="margin-bottom:6px">
+            <strong style="font-size:14px">${esc(r.name)}</strong>
+            <span style="font-weight:800;color:var(--primary)">${r.avg}%</span>
+          </div>
+          <div style="height:8px;background:var(--gray-100);border-radius:8px;overflow:hidden">
+            <div style="height:100%;width:${r.avg}%;background:linear-gradient(90deg,var(--primary),#6366f1)"></div>
+          </div>
+          <div class="muted mt-8" style="font-size:12px">${r.count} activities</div>
+        </div>`).join('') : `<div class="empty"><div class="icon">📊</div><h3>No activity yet</h3><p>Start learning and your progress will show here.</p></div>`}
+      ${recent.length ? `
+        <div class="section-head mt-24"><h2>🕒 ${t('recentActivity')}</h2></div>
+        ${recent.map(it=>`
+          <div class="item-row">
             <div class="info">
-              <span class="subject-badge">${item.subjectIcon} ${item.subjectName}</span>
-              <span class="title">${item.chapter.title || 'Untitled'}</span>
-              <span style="font-size:13px;color:var(--gray-500);">Ch. ${item.chapterIndex+1}</span>
+              <div class="title">${esc(it.activityType||'activity')} · ${it.percentage||0}%</div>
+              <div class="sub">${it.score||0}/${it.totalQuestions||0} · ${it.classId||''}</div>
             </div>
-            <div class="actions">
-              <button class="edit-btn" data-key="${item.subjectKey}" data-idx="${item.chapterIndex}">✏️ Edit</button>
-              <button class="del-btn" data-key="${item.subjectKey}" data-idx="${item.chapterIndex}">🗑️ Delete</button>
-            </div>
-          </div>
-        `).join('');
+          </div>`).join('')}
+      ` : ''}`;
+  }catch(e){
+    console.error(e);
+    $('#dashBody').innerHTML = `<div class="empty"><div class="icon">⚠️</div><h3>Could not load progress</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
 
-        list.querySelectorAll('.edit-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const key = btn.dataset.key;
-            const idx = parseInt(btn.dataset.idx);
-            const ch = appData.subjects[key]?.chapters?.[idx];
-            if (ch) showAdminForm({ subjectKey: key, chapterIndex: idx, chapter: ch });
-          });
-        });
+/* ======================= ADMIN ======================= */
+async function renderAdmin(){
+  const page = $('#page-admin');
+  if(!State.user){
+    page.innerHTML = `<div class="empty"><div class="icon">🔐</div><h3>Please login first</h3><button class="btn btn-primary mt-16" onclick="location.reload()">Go to Login</button></div>`;
+    setActive('admin'); return;
+  }
+  if(!State.isAdmin){
+    page.innerHTML = `
+      <div style="max-width:440px;margin:20px auto">
+        <div class="hero" style="padding:28px 24px">
+          <div class="eyebrow">🔐 ${t('adminLogin')}</div>
+          <h1>Admin / Teacher</h1>
+          <p>Ask the platform owner to grant your account <code>role:'admin'</code> in Firestore <code>students/{uid}</code>.</p>
+        </div>
+        <div style="background:#fff;border:1px solid var(--gray-200);border-radius:16px;padding:20px;box-shadow:var(--shadow)">
+          <p class="muted" style="font-size:13px">Your UID: <code style="font-size:11px">${esc(State.user.uid)}</code></p>
+          <button class="btn btn-primary w-full mt-16" id="seedBtn">🌱 Seed Default Classes (first-time only)</button>
+          <button class="btn btn-secondary w-full mt-8" id="backBtn">← ${t('back')}</button>
+        </div>
+      </div>`;
+    $('#backBtn').onclick = ()=> renderHome();
+    $('#seedBtn').onclick = async ()=>{
+      try{
+        const created = await DataService.seedDefaults();
+        toast(created ? '✅ Default classes seeded!' : 'Data already exists.', created?'success':'info');
+      }catch(e){ toast(e.message,'error'); }
+    };
+    setActive('admin'); return;
+  }
+  page.innerHTML = `
+    <div class="admin-shell">
+      <div class="admin-topbar">
+        <h2>⚙️ Admin Panel</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" id="backHome">🏠 ${t('home')}</button>
+          <button class="btn btn-secondary btn-sm" id="seedBtn">🌱 Seed Classes</button>
+        </div>
+      </div>
+      <div class="admin-nav" id="adminNav">
+        <button class="active" data-tab="chapters">📖 Chapters</button>
+        <button data-tab="subjects">📚 Subjects</button>
+        <button data-tab="classes">🏫 Classes</button>
+        <button data-tab="pdf">📄 PDF Library</button>
+        <button data-tab="questions">❓ Question Bank</button>
+        <button data-tab="aigen">✨ AI Generator</button>
+        <button data-tab="students">👥 Students</button>
+        <button data-tab="results">📊 Results</button>
+        <button data-tab="settings">⚙️ Settings</button>
+      </div>
+      <div class="admin-content" id="adminContent"></div>
+    </div>`;
+  $('#backHome').onclick = ()=> renderHome();
+  $('#seedBtn').onclick = async ()=>{
+    try{
+      const created = await DataService.seedDefaults();
+      toast(created ? '✅ Seeded!' : 'Already seeded.', created?'success':'info');
+      DataService.clearCache();
+      State.classes = await DataService.getClasses();
+    }catch(e){ toast(e.message,'error'); }
+  };
+  $$('#adminNav button').forEach(btn=>{
+    btn.onclick = ()=>{
+      $$('#adminNav button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAdminTab(btn.dataset.tab);
+    };
+  });
+  renderAdminTab('chapters');
+  setActive('admin');
+}
 
-        list.querySelectorAll('.del-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const key = btn.dataset.key;
-            const idx = parseInt(btn.dataset.idx);
-            if (confirm(`Delete "${appData.subjects[key]?.chapters?.[idx]?.title || 'chapter'}"?`)) {
-              appData.subjects[key].chapters.splice(idx, 1);
-              await saveAppData();
-              renderAdminList();
-              showToast('🗑️ Chapter deleted!', 'success');
-            }
-          });
-        });
-      }
+function renderAdminTab(tab){
+  const c = $('#adminContent');
+  if(tab==='chapters')  return renderAdminChapters(c);
+  if(tab==='subjects')  return renderAdminSubjects(c);
+  if(tab==='classes')   return renderAdminClasses(c);
+  if(tab==='pdf')       return renderAdminPDF(c);
+  if(tab==='questions') return renderAdminQuestions(c);
+  if(tab==='aigen')     return renderAdminAIGen(c);
+  if(tab==='students')  return renderAdminStudents(c);
+  if(tab==='results')   return renderAdminResults(c);
+  if(tab==='settings')  return renderAdminSettings(c);
+}
 
-      function showAdminForm(editData) {
-        const form = container.querySelector('#adminForm');
-        const isEdit = !!editData;
-
-        let subjectOptions = Object.values(appData.subjects).map(s =>
-          `<option value="${s.id}" ${isEdit && s.id === editData.subjectKey ? 'selected' : ''}>${s.icon} ${s.name}</option>`
-        ).join('');
-
-        form.innerHTML = `
-          <h3>${isEdit ? '✏️ Edit Chapter' : '➕ Add New Chapter'}</h3>
-          <div class="form-group"><label>Subject</label><select id="afSubject">${subjectOptions}</select></div>
-          <div class="form-row">
-            <div class="form-group"><label>Title (English)</label><input type="text" id="afTitle" value="${isEdit ? editData.chapter.title || '' : ''}" placeholder="e.g. Food, Health and Hygiene" /></div>
-            <div class="form-group"><label>Title (Hindi)</label><input type="text" id="afTitleHi" value="${isEdit ? editData.chapter.titleHi || '' : ''}" placeholder="e.g. भोजन, स्वास्थ्य और स्वच्छता" /></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Summary (English)</label><input type="text" id="afSummary" value="${isEdit ? editData.chapter.summary || '' : ''}" placeholder="Short summary in English" /></div>
-            <div class="form-group"><label>Summary (Hindi)</label><input type="text" id="afSummaryHi" value="${isEdit ? editData.chapter.summaryHi || '' : ''}" placeholder="Short summary in Hindi" /></div>
-          </div>
-          <div class="form-group"><label>Content (HTML)</label><textarea id="afContent" rows="8" placeholder="Paste HTML content here...">${isEdit ? editData.chapter.content || '' : ''}</textarea></div>
-          <div class="form-group"><label>MCQs (JSON array)</label><textarea id="afMcqs" rows="4" placeholder='[{"q":"Question?","opts":["A","B","C","D"],"ans":0}]'>${isEdit ? JSON.stringify(editData.chapter.mcqs || [], null, 2) : ''}</textarea></div>
-          <div class="form-group"><label>Fill in the Blanks (JSON array)</label><textarea id="afFills" rows="3" placeholder='[{"q":"Text with ______","ans":"answer"}]'>${isEdit ? JSON.stringify(editData.chapter.fills || [], null, 2) : ''}</textarea></div>
-          <div class="form-group"><label>Q&A (JSON array)</label><textarea id="afQa" rows="3" placeholder='[{"q":"Question?","a":"Answer."}]'>${isEdit ? JSON.stringify(editData.chapter.qa || [], null, 2) : ''}</textarea></div>
-          <div class="form-actions">
-            <button class="btn-success" id="afSave">💾 Save Chapter</button>
-            <button class="btn-secondary" id="afCancel">Cancel</button>
-          </div>
-        `;
-
-        form.classList.add('active');
-
-        form.querySelector('#afCancel').addEventListener('click', () => {
-          form.classList.remove('active');
-        });
-
-        form.querySelector('#afSave').addEventListener('click', async () => {
-          try {
-            const subjectKey = form.querySelector('#afSubject').value;
-            const title = form.querySelector('#afTitle').value.trim();
-            const titleHi = form.querySelector('#afTitleHi').value.trim();
-            const summary = form.querySelector('#afSummary').value.trim();
-            const summaryHi = form.querySelector('#afSummaryHi').value.trim();
-            const content = form.querySelector('#afContent').value.trim();
-            const mcqsRaw = form.querySelector('#afMcqs').value.trim();
-            const fillsRaw = form.querySelector('#afFills').value.trim();
-            const qaRaw = form.querySelector('#afQa').value.trim();
-
-            if (!title) { showToast('⚠️ Please enter a chapter title.', 'error'); return; }
-
-            const mcqs = mcqsRaw ? JSON.parse(mcqsRaw) : [];
-            const fills = fillsRaw ? JSON.parse(fillsRaw) : [];
-            const qa = qaRaw ? JSON.parse(qaRaw) : [];
-
-            const chapterData = {
-              id: isEdit ? editData.chapter.id : Date.now(),
-              title,
-              titleHi: titleHi || title,
-              summary: summary || '',
-              summaryHi: summaryHi || summary || '',
-              content: content || '<p>No content provided.</p>',
-              mcqs,
-              fills,
-              qa
-            };
-
-            if (isEdit) {
-              appData.subjects[subjectKey].chapters[editData.chapterIndex] = chapterData;
-            } else {
-              if (!appData.subjects[subjectKey].chapters) appData.subjects[subjectKey].chapters = [];
-              appData.subjects[subjectKey].chapters.push(chapterData);
-            }
-
-            await saveAppData();
-            form.classList.remove('active');
-            renderAdminList();
-            showToast(`✅ Chapter "${title}" ${isEdit ? 'updated' : 'added'}!`, 'success');
-          } catch (e) {
-            showToast('❌ Error: ' + e.message, 'error');
-          }
-        });
-      }
+/* ---- Settings (AI key) ---- */
+async function renderAdminSettings(c){
+  let current = State.geminiKey || '';
+  c.innerHTML = `
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:14px">⚙️ Platform Settings</h3>
+    <div style="background:#eff6ff;border-left:4px solid var(--primary);padding:14px 18px;border-radius:0 12px 12px 0;margin-bottom:18px;font-size:13px;line-height:1.7">
+      <strong>🔑 Gemini API Key</strong><br>
+      AI features (Chatbot, AI Ask, Content Generator) need a Google Gemini API key.<br>
+      Get your free key: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary);font-weight:600">aistudio.google.com/app/apikey</a><br>
+      <span class="muted" style="font-size:12px">Saved to Firestore. All users share this key.</span>
+    </div>
+    <div class="form-group">
+      <label>Gemini API Key</label>
+      <input type="text" id="aiKey" placeholder="AIza..." value="${esc(current)}" autocomplete="off">
+    </div>
+    <div class="flex gap-12 mt-16" style="flex-wrap:wrap">
+      <button class="btn btn-primary" id="saveKeyBtn">💾 ${t('save')}</button>
+      <button class="btn btn-secondary" id="testKeyBtn">🧪 Test</button>
+      <button class="btn btn-danger" id="clearKeyBtn">🗑️ Clear</button>
+    </div>
+    <div id="keyStatus" class="mt-16"></div>`;
+  $('#saveKeyBtn').onclick = async ()=>{
+    const k = $('#aiKey').value.trim();
+    if(!k){ toast('Enter a key','error'); return; }
+    try{
+      await AIService.saveKey(k);
+      toast('✅ AI key saved','success');
+      $('#keyStatus').innerHTML = `<span style="color:var(--success)">✅ Key saved. AI features enabled.</span>`;
+    }catch(e){ toast(e.message,'error'); }
+  };
+  $('#clearKeyBtn').onclick = async ()=>{
+    if(!confirm('Remove AI key? AI features will stop working.')) return;
+    try{ await AIService.saveKey(''); $('#aiKey').value=''; toast('Cleared','info'); }
+    catch(e){ toast(e.message,'error'); }
+  };
+  $('#testKeyBtn').onclick = async ()=>{
+    const k = $('#aiKey').value.trim();
+    if(!k){ toast('Enter a key first','error'); return; }
+    $('#keyStatus').innerHTML = '<span class="muted">Testing…</span>';
+    const old = State.geminiKey;
+    State.geminiKey = k;
+    try{
+      const ans = await AIService.callGemini('Say "OK" in one word.', 'Reply in one word only.');
+      $('#keyStatus').innerHTML = `<span style="color:var(--success)">✅ Working! Response: ${esc(ans.slice(0,60))}</span>`;
+    }catch(e){
+      State.geminiKey = old;
+      $('#keyStatus').innerHTML = `<span style="color:var(--danger)">❌ ${esc(e.message)}</span>`;
     }
+  };
+}
 
-    // ================================================================
-    //  LANGUAGE TOGGLE
-    // ================================================================
+/* ---- Chapters ---- */
+async function renderAdminChapters(c){
+  c.innerHTML = `
+    <div class="flex justify-between items-center" style="margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <h3 style="font-size:16px;font-weight:800">📖 Chapter Manager</h3>
+      <button class="btn btn-primary btn-sm" id="addCh">➕ Add Chapter</button>
+    </div>
+    <div class="form-row" style="margin-bottom:14px">
+      <div class="form-group"><label>Class</label><select id="fltClass"></select></div>
+      <div class="form-group"><label>Subject</label><select id="fltSubject"></select></div>
+    </div>
+    <div id="chList"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
+  const classSel = $('#fltClass');
+  const classList = State.classes.length ? State.classes : CLASSES_SEED;
+  classSel.innerHTML = classList.map(x=>`<option value="${x.id}">${esc(State.lang==='hi'?x.nameHi:x.name)}</option>`).join('');
+  classSel.value = 'class-5';
+  async function loadSubjects(){
+    const sid = classSel.value;
+    const subs = await DataService.getSubjects(sid);
+    $('#fltSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.icon||'📘')} ${esc(s.name)}</option>`).join('') || '<option value="">No subjects</option>';
+    await loadChapters();
+  }
+  async function loadChapters(){
+    const subId = $('#fltSubject').value;
+    const wrap = $('#chList');
+    if(!subId){ wrap.innerHTML = `<div class="empty"><div class="icon">📚</div><p>Select a subject</p></div>`; return; }
+    try{
+      delete State.chaptersCache[subId];
+      const chapters = await DataService.getChapters(subId);
+      if(!chapters.length){ wrap.innerHTML = `<div class="empty"><div class="icon">📭</div><p>No chapters yet</p></div>`; return; }
+      wrap.innerHTML = chapters.map(ch=>`
+        <div class="item-row">
+          <div class="info">
+            <div class="title">${esc(ch.number||'')}. ${esc(ch.title)}</div>
+            <div class="sub">${esc(ch.summary||'')}</div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm editCh" data-id="${ch.id}">✏️</button>
+            <button class="btn btn-secondary btn-sm pdfCh" data-id="${ch.id}">📄</button>
+            <button class="btn btn-danger btn-sm delCh" data-id="${ch.id}">🗑️</button>
+          </div>
+        </div>`).join('');
+      $$('#chList .editCh').forEach(b=> b.onclick = ()=> openChapterForm(chapters.find(x=>x.id===b.dataset.id), classSel.value, subId));
+      $$('#chList .pdfCh').forEach(b=> b.onclick = ()=> openPDFUpload(chapters.find(x=>x.id===b.dataset.id), classSel.value, subId));
+      $$('#chList .delCh').forEach(b=> b.onclick = async ()=>{
+        if(!confirm('Delete this chapter?')) return;
+        try{ await deleteDoc(doc(db,'chapters',b.dataset.id)); toast('Deleted','success'); DataService.clearCache(); loadChapters(); }
+        catch(e){ toast(e.message,'error'); }
+      });
+    }catch(e){ wrap.innerHTML = `<div class="empty"><div class="icon">⚠️</div><p>${esc(e.message)}</p></div>`; }
+  }
+  classSel.onchange = loadSubjects;
+  $('#fltSubject').onchange = loadChapters;
+  $('#addCh').onclick = ()=> openChapterForm(null, classSel.value, $('#fltSubject').value);
+  await loadSubjects();
+}
 
-    document.getElementById('langToggle').addEventListener('click', function() {
-      currentLang = currentLang === 'en' ? 'hi' : 'en';
-      this.textContent = currentLang === 'en' ? '🌐 English' : '🌐 हिंदी';
-      // Update hero description
-      document.getElementById('heroDesc').textContent = currentLang === 'en' ?
-        'Explore Class 5 subjects with fun chapters, quizzes, and activities!' :
-        'कक्षा 5 के विषयों को मज़ेदार अध्याय, क्विज़ और गतिविधियों के साथ एक्सप्लोर करें!';
-      // Re-render current page
-      if (currentPage === 'home') renderHome();
-      else if (currentPage === 'subject' && currentSubject) renderSubject(currentSubject);
-      else if (currentPage === 'chapter' && currentChapter) renderChapter(currentChapter);
-      else if (currentPage === 'admin') renderAdmin();
-      showToast(currentLang === 'en' ? '🌍 Switched to English' : '🌍 हिंदी में बदला गया', 'info', 1500);
+function openChapterForm(chapter, classId, subjectId){
+  const isEdit = !!chapter;
+  const c = $('#adminContent');
+  c.innerHTML = `
+    <div class="flex justify-between items-center" style="margin-bottom:14px">
+      <h3 style="font-size:16px;font-weight:800">${isEdit?'✏️ Edit Chapter':'➕ Add Chapter'}</h3>
+      <button class="btn btn-secondary btn-sm" id="cancelCh">Cancel</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Chapter Number</label><input id="chNum" type="number" min="1" value="${esc(chapter?.number||1)}"></div>
+      <div class="form-group"><label>Order</label><input id="chOrder" type="number" min="1" value="${esc(chapter?.order||1)}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Title (English)</label><input id="chTitle" value="${esc(chapter?.title||'')}"></div>
+      <div class="form-group"><label>Title (Hindi)</label><input id="chTitleHi" value="${esc(chapter?.titleHi||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Summary (English)</label><input id="chSum" value="${esc(chapter?.summary||'')}"></div>
+      <div class="form-group"><label>Summary (Hindi)</label><input id="chSumHi" value="${esc(chapter?.summaryHi||'')}"></div>
+    </div>
+    <div class="form-group"><label>Content (English HTML)</label><textarea id="chContent" rows="8">${esc(chapter?.content||'')}</textarea></div>
+    <div class="form-group"><label>Content (Hindi HTML) — optional</label><textarea id="chContentHi" rows="6">${esc(chapter?.contentHi||'')}</textarea></div>
+    <div class="flex gap-12 mt-16" style="flex-wrap:wrap">
+      <button class="btn btn-primary" id="saveCh">💾 ${t('save')}</button>
+    </div>`;
+  $('#cancelCh').onclick = ()=> renderAdminTab('chapters');
+  $('#saveCh').onclick = async ()=>{
+    const data = {
+      classId, subjectId,
+      number: parseInt($('#chNum').value)||1,
+      order:  parseInt($('#chOrder').value)||1,
+      title:   $('#chTitle').value.trim(),
+      titleHi: $('#chTitleHi').value.trim() || $('#chTitle').value.trim(),
+      summary: $('#chSum').value.trim(),
+      summaryHi: $('#chSumHi').value.trim() || $('#chSum').value.trim(),
+      content: $('#chContent').value,
+      contentHi: $('#chContentHi').value,
+      updatedAt: serverTimestamp()
+    };
+    if(!data.title){ toast('Title required','error'); return; }
+    try{
+      if(isEdit){ await updateDoc(doc(db,'chapters',chapter.id), data); }
+      else { data.createdAt = serverTimestamp(); data.pdfUrl=''; data.pdfPath=''; await addDoc(collection(db,'chapters'), data); }
+      toast('✅ Saved','success');
+      DataService.clearCache();
+      renderAdminTab('chapters');
+    }catch(e){ toast(e.message,'error'); }
+  };
+}
+
+function openPDFUpload(chapter, classId, subjectId){
+  const c = $('#adminContent');
+  c.innerHTML = `
+    <div class="flex justify-between items-center" style="margin-bottom:14px">
+      <h3 style="font-size:16px;font-weight:800">📄 Upload PDF</h3>
+      <button class="btn btn-secondary btn-sm" id="cancelPdf">Cancel</button>
+    </div>
+    <p class="muted" style="margin-bottom:12px">Chapter: <strong>${esc(chapter.title)}</strong></p>
+    <div class="form-group"><label>Select PDF file (max 25 MB)</label><input type="file" id="pdfFile" accept="application/pdf"></div>
+    <div id="pdfProgress" class="muted"></div>
+    <div class="flex gap-12 mt-16">
+      <button class="btn btn-primary" id="uploadBtn">⬆ Upload</button>
+    </div>
+    ${chapter.pdfUrl ? `<div class="mt-24"><p class="muted">Current PDF:</p><a class="btn btn-secondary mt-8" href="${esc(chapter.pdfUrl)}" target="_blank">Open current PDF ↗</a></div>` : ''}`;
+  $('#cancelPdf').onclick = ()=> renderAdminTab('chapters');
+  $('#uploadBtn').onclick = async ()=>{
+    const file = $('#pdfFile').files[0];
+    if(!file){ toast('Select a file','error'); return; }
+    try{
+      const {url, path} = await StorageService.uploadPDF(file, {
+        classId, subjectId, chapterId: chapter.id,
+        onProgress: p => $('#pdfProgress').textContent = `Uploading… ${p}%`
+      });
+      await updateDoc(doc(db,'chapters',chapter.id), {pdfUrl:url, pdfPath:path, updatedAt:serverTimestamp()});
+      toast('✅ PDF uploaded','success');
+      DataService.clearCache();
+      renderAdminTab('chapters');
+    }catch(e){ toast(e.message,'error'); }
+  };
+}
+
+/* ---- Subjects ---- */
+async function renderAdminSubjects(c){
+  c.innerHTML = `
+    <div class="flex justify-between items-center" style="margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <h3 style="font-size:16px;font-weight:800">📚 Subjects</h3>
+      <button class="btn btn-primary btn-sm" id="addSubj">➕ Add Subject</button>
+    </div>
+    <div class="form-group"><label>Class</label><select id="subjClass"></select></div>
+    <div id="subjList"></div>
+    <div id="subjForm" class="mt-24"></div>`;
+  const classList = State.classes.length ? State.classes : CLASSES_SEED;
+  $('#subjClass').innerHTML = classList.map(x=>`<option value="${x.id}">${esc(State.lang==='hi'?x.nameHi:x.name)}</option>`).join('');
+  $('#subjClass').value = 'class-5';
+  $('#subjClass').onchange = loadSubs;
+  $('#addSubj').onclick = ()=> showSubjForm(null);
+  async function loadSubs(){
+    const wrap = $('#subjList');
+    try{
+      delete State.subjectsCache[$('#subjClass').value];
+      const subs = await DataService.getSubjects($('#subjClass').value);
+      wrap.innerHTML = subs.length ? subs.map(s=>`
+        <div class="item-row">
+          <div class="info"><div class="title">${esc(s.icon||'📘')} ${esc(s.name)}</div><div class="sub">${esc(s.nameHi||'')} · order ${s.order||0}</div></div>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm edSub" data-id="${s.id}">✏️</button>
+            <button class="btn btn-danger btn-sm delSub" data-id="${s.id}">🗑️</button>
+          </div>
+        </div>`).join('') : `<div class="empty"><div class="icon">📚</div><p>No subjects</p></div>`;
+      $$('#subjList .edSub').forEach(b=> b.onclick = ()=> showSubjForm(subs.find(x=>x.id===b.dataset.id)));
+      $$('#subjList .delSub').forEach(b=> b.onclick = async ()=>{
+        if(!confirm('Delete subject?')) return;
+        await deleteDoc(doc(db,'subjects',b.dataset.id));
+        toast('Deleted','success'); DataService.clearCache(); loadSubs();
+      });
+    }catch(e){ wrap.innerHTML = `<div class="empty"><div class="icon">⚠️</div><p>${esc(e.message)}</p></div>`; }
+  }
+  function showSubjForm(s){
+    const isEdit = !!s;
+    const form = $('#subjForm');
+    form.innerHTML = `
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:18px">
+        <h4 style="font-weight:800;margin-bottom:12px">${isEdit?'✏️ Edit':'➕ Add'} Subject</h4>
+        <div class="form-row">
+          <div class="form-group"><label>Icon (emoji)</label><input id="sfIcon" value="${esc(s?.icon||'📘')}"></div>
+          <div class="form-group"><label>Order</label><input type="number" id="sfOrder" value="${esc(s?.order||1)}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Name (English)</label><input id="sfName" value="${esc(s?.name||'')}"></div>
+          <div class="form-group"><label>Name (Hindi)</label><input id="sfNameHi" value="${esc(s?.nameHi||'')}"></div>
+        </div>
+        <div class="form-group"><label>Description</label><input id="sfDesc" value="${esc(s?.desc||'')}"></div>
+        <div class="flex gap-12">
+          <button class="btn btn-primary btn-sm" id="sfSave">💾 ${t('save')}</button>
+          <button class="btn btn-secondary btn-sm" id="sfCancel">Cancel</button>
+        </div>
+      </div>`;
+    $('#sfCancel').onclick = ()=> form.innerHTML='';
+    $('#sfSave').onclick = async ()=>{
+      const data = {
+        classId: $('#subjClass').value,
+        icon: $('#sfIcon').value.trim()||'📘',
+        order: parseInt($('#sfOrder').value)||1,
+        name: $('#sfName').value.trim(),
+        nameHi: $('#sfNameHi').value.trim(),
+        desc: $('#sfDesc').value.trim(),
+        active: true, updatedAt: serverTimestamp()
+      };
+      if(!data.name){ toast('Name required','error'); return; }
+      try{
+        if(isEdit) await updateDoc(doc(db,'subjects',s.id), data);
+        else { data.createdAt = serverTimestamp(); await addDoc(collection(db,'subjects'), data); }
+        toast('✅ Saved','success'); DataService.clearCache(); loadSubs(); form.innerHTML='';
+      }catch(e){ toast(e.message,'error'); }
+    };
+  }
+  await loadSubs();
+}
+
+/* ---- Classes ---- */
+function renderAdminClasses(c){
+  const classList = State.classes.length ? State.classes : CLASSES_SEED;
+  c.innerHTML = `
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:14px">🏫 Classes (1–10)</h3>
+    ${classList.map(x=>`
+      <div class="item-row">
+        <div class="info"><div class="title">${esc(State.lang==='hi'?x.nameHi:x.name)}</div><div class="sub">ID: ${esc(x.id)} · order ${x.order}</div></div>
+      </div>`).join('')}
+    <p class="muted mt-16">Classes are fixed to 1–10. Use <em>Seed Classes</em> at the top to initialise them.</p>`;
+}
+
+/* ---- PDF Library ---- */
+async function renderAdminPDF(c){
+  c.innerHTML = `<h3 style="font-size:16px;font-weight:800;margin-bottom:14px">📄 PDF Library</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Class</label><select id="pdfClass"></select></div>
+      <div class="form-group"><label>Subject</label><select id="pdfSubject"></select></div>
+    </div>
+    <div id="pdfList"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
+  const classList = State.classes.length ? State.classes : CLASSES_SEED;
+  $('#pdfClass').innerHTML = classList.map(x=>`<option value="${x.id}">${esc(State.lang==='hi'?x.nameHi:x.name)}</option>`).join('');
+  $('#pdfClass').value = 'class-5';
+  async function load(){
+    const subs = await DataService.getSubjects($('#pdfClass').value);
+    $('#pdfSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    await listChapters();
+  }
+  async function listChapters(){
+    const subId = $('#pdfSubject').value;
+    if(!subId) return;
+    delete State.chaptersCache[subId];
+    const chapters = await DataService.getChapters(subId);
+    $('#pdfList').innerHTML = chapters.map(ch=>`
+      <div class="item-row">
+        <div class="info">
+          <div class="title">${esc(ch.title)}</div>
+          <div class="sub">${ch.pdfUrl ? '✅ PDF uploaded' : '⚠ No PDF'}</div>
+        </div>
+        <div class="actions">
+          ${ch.pdfUrl ? `<a class="btn btn-secondary btn-sm" href="${esc(ch.pdfUrl)}" target="_blank">Open</a>` : ''}
+          <button class="btn btn-primary btn-sm upPdf" data-id="${ch.id}">⬆ Upload</button>
+        </div>
+      </div>`).join('') || `<div class="empty"><div class="icon">📄</div><p>No chapters</p></div>`;
+    $$('#pdfList .upPdf').forEach(b=> b.onclick = ()=> openPDFUpload(chapters.find(x=>x.id===b.dataset.id), $('#pdfClass').value, subId));
+  }
+  $('#pdfClass').onchange = load;
+  $('#pdfSubject').onchange = listChapters;
+  await load();
+}
+
+/* ---- Question Bank ---- */
+async function renderAdminQuestions(c){
+  c.innerHTML = `
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:14px">❓ Question Bank</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Class</label><select id="qbClass"></select></div>
+      <div class="form-group"><label>Subject</label><select id="qbSubject"></select></div>
+    </div>
+    <div class="form-group"><label>Chapter</label><select id="qbChapter"></select></div>
+    <div class="chip-row">
+      <div class="chip active" data-type="all">All</div>
+      <div class="chip" data-type="mcq">MCQ</div>
+      <div class="chip" data-type="fill">Fill</div>
+      <div class="chip" data-type="qa">Q&A</div>
+    </div>
+    <div id="qbList"></div>`;
+  const classList = State.classes.length ? State.classes : CLASSES_SEED;
+  $('#qbClass').innerHTML = classList.map(x=>`<option value="${x.id}">${esc(State.lang==='hi'?x.nameHi:x.name)}</option>`).join('');
+  $('#qbClass').value = 'class-5';
+  let typeFilter = 'all';
+  async function loadSubs(){
+    const subs = await DataService.getSubjects($('#qbClass').value);
+    $('#qbSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    await loadChapters();
+  }
+  async function loadChapters(){
+    const subId = $('#qbSubject').value;
+    if(!subId){ $('#qbChapter').innerHTML = ''; return; }
+    delete State.chaptersCache[subId];
+    const chapters = await DataService.getChapters(subId);
+    $('#qbChapter').innerHTML = chapters.map(x=>`<option value="${x.id}">${esc(x.title)}</option>`).join('');
+    await loadQuestions();
+  }
+  async function loadQuestions(){
+    const chId = $('#qbChapter').value;
+    if(!chId){ $('#qbList').innerHTML = `<div class="empty"><div class="icon">❓</div><p>Select chapter</p></div>`; return; }
+    delete State.questionsCache[chId];
+    const qs = await DataService.getQuestions(chId);
+    const list = [];
+    ['mcq','fill','qa'].forEach(k=>{
+      if(typeFilter==='all' || typeFilter===k) list.push(...qs[k].map(q=>({...q, _type:k})));
     });
-
-    // ================================================================
-    //  UTILITY
-    // ================================================================
-
-    function shuffleArray(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
-
-    function updateLangUI() {
-      // can be extended
-    }
-
-    // ================================================================
-    //  INIT
-    // ================================================================
-
-    // If Firebase not ready, fallback to localStorage load
-    if (!fb) {
-      loadFromLocalStorage();
-      renderHome();
-    } else {
-      // wait for auth
-      // The load is triggered in auth callback
-    }
-
-    // Also ensure data exists if localStorage fallback
-    window.addEventListener('load', () => {
-      if (!appData) {
-        loadFromLocalStorage();
-        renderHome();
-      }
+    $('#qbList').innerHTML = list.length ? list.map(q=>`
+      <div class="item-row">
+        <div class="info">
+          <div class="title">[${q._type.toUpperCase()}] ${esc(q.q||q.qHi||'')}</div>
+          <div class="sub">${q._type==='mcq'? `Answer: ${esc((q.opts||[])[q.ans]||'')}` : q._type==='fill' ? `Answer: ${esc(q.ans||'')}` : esc((q.a||'').slice(0,80))}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-danger btn-sm delQ" data-id="${q.id}">🗑️</button>
+        </div>
+      </div>`).join('') : `<div class="empty"><div class="icon">📝</div><p>No questions</p></div>`;
+    $$('#qbList .delQ').forEach(b=> b.onclick = async ()=>{
+      if(!confirm('Delete question?')) return;
+      await deleteDoc(doc(db,'questions',b.dataset.id));
+      toast('Deleted','success'); DataService.clearCache(); loadQuestions();
     });
+  }
+  $$('#adminContent .chip').forEach(chip=> chip.onclick = ()=>{
+    $$('#adminContent .chip').forEach(x=>x.classList.remove('active'));
+    chip.classList.add('active');
+    typeFilter = chip.dataset.type;
+    loadQuestions();
+  });
+  $('#qbClass').onchange = loadSubs;
+  $('#qbSubject').onchange = loadChapters;
+  $('#qbChapter').onchange = loadQuestions;
+  await loadSubs();
+}
 
-    console.log('🚀 SmartCampus AI with Firebase ready!');
-    console.log('🔐 Admin password: admin123');
-  </script>
+/* ---- AI Generator ---- */
+function renderAdminAIGen(c){
+  c.innerHTML = `
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:14px">✨ AI Content Generator</h3>
+    <p class="muted">Upload a chapter PDF, extract text, and let AI generate bilingual explanations, MCQs, Fill-in-the-Blanks and Q&A.</p>
+    <div class="form-group"><label>PDF File</label><input type="file" id="aiPdf" accept="application/pdf"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Class</label>
+        <select id="aiClass">${(State.classes.length?State.classes:CLASSES_SEED).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Subject name</label><input id="aiSubject" placeholder="e.g. Science"></div>
+    </div>
+    <div class="form-group"><label>Chapter title</label><input id="aiTitle" placeholder="e.g. Food and Health"></div>
+    <div class="chip-row">
+      <div class="chip active" data-opt="explain">📖 Explanation</div>
+      <div class="chip active" data-opt="mcq">📝 MCQ</div>
+      <div class="chip active" data-opt="fill">✍️ Fill-in-blanks</div>
+      <div class="chip active" data-opt="qa">💬 Q&A</div>
+      <div class="chip active" data-opt="hi">🇮🇳 Hindi</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>MCQ count</label><input type="number" id="cntMcq" value="7"></div>
+      <div class="form-group"><label>Fill count</label><input type="number" id="cntFill" value="7"></div>
+    </div>
+    <div class="form-group"><label>Q&A count</label><input type="number" id="cntQa" value="7"></div>
+    <button class="btn btn-primary mt-8" id="genBtn">✨ Generate</button>
+    <div id="genOut" class="mt-24"></div>`;
+  const opts = new Set(['explain','mcq','fill','qa','hi']);
+  $$('#adminContent .chip').forEach(chip=> chip.onclick = ()=>{
+    chip.classList.toggle('active');
+    const o = chip.dataset.opt;
+    if(chip.classList.contains('active')) opts.add(o); else opts.delete(o);
+  });
+  $('#genBtn').onclick = async ()=>{
+    const file = $('#aiPdf').files[0];
+    if(!file){ toast('Select a PDF','error'); return; }
+    if(!State.geminiKey){ toast(t('aiKeyMissing'),'error'); return; }
+    const out = $('#genOut');
+    out.innerHTML = `<div class="empty"><div class="icon">⏳</div><p>Reading PDF & generating content…</p></div>`;
+    try{
+      const text = await extractPdfText(file);
+      const result = await AIService.generate({
+        pdfText: text.slice(0, 16000),
+        classId: $('#aiClass').value,
+        subjectName: $('#aiSubject').value,
+        chapterTitle: $('#aiTitle').value,
+        options: {
+          explain: opts.has('explain'), mcq: opts.has('mcq'),
+          fill: opts.has('fill'), qa: opts.has('qa'), hindi: opts.has('hi'),
+          mcqCount: parseInt($('#cntMcq').value)||7,
+          fillCount: parseInt($('#cntFill').value)||7,
+          qaCount: parseInt($('#cntQa').value)||7
+        }
+      });
+      out.innerHTML = `
+        <div style="background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:16px">
+          <h4 style="font-weight:800;margin-bottom:10px">📋 Preview</h4>
+          <div class="form-group"><label>Explanation (HTML)</label><textarea id="gExplain">${esc(result.explanation||'')}</textarea></div>
+          <div class="form-group"><label>MCQs (JSON)</label><textarea id="gMcq">${esc(JSON.stringify(result.mcqs||[],null,2))}</textarea></div>
+          <div class="form-group"><label>Fill-in-Blanks (JSON)</label><textarea id="gFill">${esc(JSON.stringify(result.fills||[],null,2))}</textarea></div>
+          <div class="form-group"><label>Q&A (JSON)</label><textarea id="gQa">${esc(JSON.stringify(result.qas||[],null,2))}</textarea></div>
+          <button class="btn btn-primary mt-8" id="saveGen">💾 Save to new chapter</button>
+        </div>`;
+      $('#saveGen').onclick = async ()=>{
+        try{
+          const subId = prompt('Paste subjectId (e.g. class5-science):') || '';
+          const chRef = await addDoc(collection(db,'chapters'), {
+            classId: $('#aiClass').value,
+            subjectId: subId,
+            number: 1, order: 99,
+            title: $('#aiTitle').value || 'AI Chapter',
+            titleHi: $('#aiTitle').value || 'AI Chapter',
+            content: $('#gExplain').value,
+            contentHi: '',
+            createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+          });
+          const qs = [
+            ...JSON.parse($('#gMcq').value).map((q,i)=>({chapterId:chRef.id, type:'mcq', order:i, ...q})),
+            ...JSON.parse($('#gFill').value).map((q,i)=>({chapterId:chRef.id, type:'fill', order:i, ...q})),
+            ...JSON.parse($('#gQa').value).map((q,i)=>({chapterId:chRef.id, type:'qa', order:i, ...q}))
+          ];
+          const batch = writeBatch(db);
+          qs.forEach(q => batch.set(doc(collection(db,'questions')), q));
+          await batch.commit();
+          toast('✅ Saved to Firestore','success');
+          DataService.clearCache();
+        }catch(e){ toast(e.message,'error'); }
+      };
+    }catch(e){
+      out.innerHTML = `<div class="empty"><div class="icon">⚠️</div><p>${esc(e.message)}</p></div>`;
+    }
+  };
+}
+
+async function extractPdfText(file){
+  if(!window.pdfjsLib){
+    await new Promise((res,rej)=>{
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = res; s.onerror = rej; document.head.appendChild(s);
+    });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({data:buf}).promise;
+  let out = '';
+  for(let i=1;i<=Math.min(pdf.numPages,40);i++){
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    out += tc.items.map(x=>x.str).join(' ') + '\n';
+  }
+  return out;
+}
+
+/* ---- Students ---- */
+async function renderAdminStudents(c){
+  c.innerHTML = `<h3 style="font-size:16px;font-weight:800;margin-bottom:14px">👥 Students</h3><div id="stList"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
+  try{
+    const snap = await getDocs(collection(db,'students'));
+    const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    $('#stList').innerHTML = list.length ? list.map(s=>`
+      <div class="item-row">
+        <div class="info">
+          <div class="title">${esc(s.name||'(no name)')} ${s.role==='admin'?'<span class="chip active" style="margin-left:6px">admin</span>':''}</div>
+          <div class="sub">${esc(s.email||'')} · ${esc(s.classId||'no class')}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary btn-sm makeAdmin" data-id="${s.id}" data-role="${s.role||'student'}">${s.role==='admin'?'Revoke Admin':'Make Admin'}</button>
+        </div>
+      </div>`).join('') : `<div class="empty"><div class="icon">👥</div><p>No students yet</p></div>`;
+    $$('#stList .makeAdmin').forEach(b=> b.onclick = async ()=>{
+      const newRole = b.dataset.role==='admin' ? 'student' : 'admin';
+      await updateDoc(doc(db,'students',b.dataset.id), {role:newRole});
+      toast('✅ Updated','success'); renderAdminTab('students');
+    });
+  }catch(e){ $('#stList').innerHTML = `<div class="empty"><div class="icon">⚠️</div><p>${esc(e.message)}</p></div>`; }
+}
+
+/* ---- Results ---- */
+async function renderAdminResults(c){
+  c.innerHTML = `<h3 style="font-size:16px;font-weight:800;margin-bottom:14px">📊 Recent Quiz Results</h3><div id="resList"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
+  try{
+    const snap = await getDocs(query(collection(db,'quizResults'), orderBy('completedAt','desc'), limit(50)));
+    const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    $('#resList').innerHTML = list.length ? list.map(r=>`
+      <div class="item-row">
+        <div class="info">
+          <div class="title">${esc(r.studentName||r.studentId||'')}</div>
+          <div class="sub">${esc(r.classId||'')} · ${esc(r.subjectId||'')} · ${r.score}/${r.total} (${r.percentage}%)</div>
+        </div>
+      </div>`).join('') : `<div class="empty"><div class="icon">📊</div><p>No results</p></div>`;
+  }catch(e){ $('#resList').innerHTML = `<div class="empty"><div class="icon">⚠️</div><p>${esc(e.message)}</p></div>`; }
+}
+
+/* ======================= CHATBOT ======================= */
+function wireChat(){
+  const fab = $('#chatFab');
+  const panel = $('#chatPanel');
+  const body = $('#chatBody');
+  const input = $('#chatInput');
+  const send = $('#chatSend');
+  fab.onclick = ()=> panel.classList.toggle('hidden');
+  $('#chatClose').onclick = ()=> panel.classList.add('hidden');
+  async function push(text){
+    if(!text.trim()) return;
+    if(!State.geminiKey){ toast(t('aiKeyMissing'),'error'); return; }
+    const userMsg = document.createElement('div');
+    userMsg.className = 'chat-msg user'; userMsg.textContent = text;
+    body.appendChild(userMsg);
+    input.value = '';
+    body.scrollTop = body.scrollHeight;
+    const typing = document.createElement('div');
+    typing.className = 'chat-msg ai typing'; typing.textContent = '🤖 Thinking…';
+    body.appendChild(typing);
+    body.scrollTop = body.scrollHeight;
+    try{
+      const answer = await AIService.ask({
+        prompt: text,
+        chapterContext: State.chatContext?.chapterContent || '',
+        classLevel: State.chatContext?.classId || State.profile?.classId,
+        lang: State.lang
+      });
+      typing.classList.remove('typing');
+      typing.textContent = answer;
+    }catch(e){
+      typing.classList.remove('typing');
+      typing.textContent = '⚠️ '+e.message;
+    }
+    body.scrollTop = body.scrollHeight;
+  }
+  send.onclick = ()=> push(input.value);
+  input.onkeydown = e=>{ if(e.key==='Enter') push(input.value); };
+}
+
+/* ======================= HEADER ======================= */
+function wireHeader(){
+  $('#brandIcon').textContent = BRANDING.icon;
+  $('#brandName').innerHTML = BRANDING.nameHtml;
+  document.title = BRANDING.name + ' — Class 1–10 AI Learning Platform';
+  $('#langBtn').onclick = ()=>{
+    State.lang = State.lang==='en' ? 'hi' : 'en';
+    localStorage.setItem('sc_lang', State.lang);
+    $('#langBtn').textContent = State.lang==='en' ? '🌐 EN' : '🌐 हिं';
+    Router.refresh();
+  };
+  $('#langBtn').textContent = State.lang==='en' ? '🌐 EN' : '🌐 हिं';
+  $('#adminBtn').onclick = ()=> renderAdmin();
+  $('#logoutBtn').onclick = async ()=>{ await AuthService.logout(); location.reload(); };
+  $('#userChip').onclick = ()=>{
+    const name = State.profile?.name || 'Learner';
+    if(confirm(`Logged in as ${name}. Go to dashboard?`)) renderDashboard();
+  };
+}
+function updateUserChip(){
+  const chip = $('#userChip');
+  const nm = $('#userName');
+  const av = $('#userAvatar');
+  if(State.profile?.name){
+    chip.classList.remove('hidden');
+    $('#logoutBtn').classList.remove('hidden');
+    nm.textContent = State.profile.name.split(' ')[0];
+    av.textContent = initials(State.profile.name);
+  } else if(State.user && !State.user.isAnonymous){
+    chip.classList.remove('hidden');
+    $('#logoutBtn').classList.remove('hidden');
+    nm.textContent = State.user.email?.split('@')[0] || 'User';
+    av.textContent = initials(nm.textContent);
+  } else {
+    chip.classList.add('hidden');
+    $('#logoutBtn').classList.add('hidden');
+  }
+}
+
+/* ======================= ROUTER ======================= */
+const Router = {
+  refresh(){
+    const r = State.route;
+    if(r==='home') renderHome();
+    else if(r==='subjects') renderSubjects();
+    else if(r==='chapters') renderChapters();
+    else if(r==='chapter') renderChapter();
+    else if(r==='dashboard') renderDashboard();
+    else if(r==='admin') renderAdmin();
+    else if(r==='auth') renderAuth();
+  }
+};
+
+function afterLogin(){
+  updateUserChip();
+  if(State.profile?.classId){
+    State.currentClass = (State.classes.find(c=>c.id===State.profile.classId)) || null;
+  }
+  if(State.isAdmin) renderAdmin();
+  else renderDashboard();
+}
+
+/* ======================= INIT ======================= */
+async function init(){
+  wireHeader();
+  wireChat();
+  try{
+    State.classes = await DataService.getClasses();
+    if(!State.classes.length) State.classes = CLASSES_SEED;
+  }catch(e){
+    console.warn('classes load failed', e);
+    State.classes = CLASSES_SEED;
+  }
+  await AuthService.bootstrap();
+  updateUserChip();
+  // Load AI key (once)
+  try{ await AIService.loadKey(); }catch(e){ console.warn('key load failed', e); }
+  if(State.profile) afterLogin();
+  else if(State.user && !State.user.isAnonymous) afterLogin();
+  else renderAuth();
+  setTimeout(()=> $('#loader').classList.add('done'), 400);
+}
+
+init().catch(err=>{
+  console.error('Init failed', err);
+  toast('Failed to load. Check connection.', 'error', 6000);
+  setTimeout(()=> $('#loader').classList.add('done'), 600);
+});
+</script>
 </body>
 </html>
