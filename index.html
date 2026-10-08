@@ -48,8 +48,7 @@ img{max-width:100%;display:block}
 .icon-btn{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff;font-size:17px;transition:var(--transition)}
 .icon-btn:hover{background:rgba(255,255,255,.16)}
 .lang-btn{padding:7px 14px;border-radius:20px;background:rgba(255,255,255,.1);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.14);transition:var(--transition)}
-.lang-btn:hover{background:rgba(255,255,255,.2)}
-.user-chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:20px;background:rgba(255,255,255,.08);font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition)}
+.user-chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:20px;background:rgba(255,255,255,.08);font-size:13px;font-weight:600;cursor:pointer}
 .user-chip .avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#0f172a;display:grid;place-items:center;font-weight:800;font-size:12px}
 
 .app-main{max-width:1180px;margin:0 auto;padding:24px max(16px,3vw) 120px}
@@ -73,7 +72,6 @@ img{max-width:100%;display:block}
 .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .btn-accent{background:var(--accent);color:#0f172a;box-shadow:0 6px 18px rgba(245,158,11,.3)}
 .btn-ghost{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.24)}
-.btn-ghost:hover{background:rgba(255,255,255,.24)}
 .btn-secondary{background:var(--gray-100);color:var(--gray-700)}
 .btn-secondary:hover{background:var(--gray-200)}
 .btn-success{background:var(--success);color:#fff}
@@ -146,7 +144,6 @@ img{max-width:100%;display:block}
 .fill-item{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:14px 18px;margin-bottom:12px}
 .fill-item .q-text{font-size:14px;margin-bottom:8px}
 .fill-item input{width:100%;max-width:280px;padding:9px 14px;border:1px solid var(--gray-300);border-radius:9px;font-size:14px;background:#fff}
-.fill-item input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
 .qa-item{background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:14px 18px;margin-bottom:10px}
 .qa-item .q{font-weight:600;font-size:15px;color:var(--gray-900);margin-bottom:8px}
 .qa-item .a{font-size:14px;color:var(--gray-700);padding-left:14px;border-left:3px solid var(--primary);line-height:1.65}
@@ -188,7 +185,6 @@ img{max-width:100%;display:block}
 @keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
 .fab{position:fixed;bottom:calc(20px + var(--safe-bottom));right:20px;z-index:70;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#6366f1);color:#fff;font-size:26px;display:grid;place-items:center;box-shadow:0 8px 26px rgba(37,99,235,.4);transition:var(--transition)}
-.fab:hover{transform:scale(1.06)}
 .chat-panel{position:fixed;bottom:calc(88px + var(--safe-bottom));right:20px;z-index:70;width:min(370px,calc(100vw - 40px));height:min(540px,70vh);background:#fff;border-radius:20px;box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);display:flex;flex-direction:column;overflow:hidden;animation:popIn .25s ease}
 @keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 .chat-head{padding:14px 18px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
@@ -200,7 +196,6 @@ img{max-width:100%;display:block}
 .chat-msg.typing{color:var(--gray-500);font-style:italic}
 .chat-input{padding:12px;border-top:1px solid var(--gray-200);display:flex;gap:8px;background:#fff}
 .chat-input input{flex:1;padding:10px 14px;border:1px solid var(--gray-300);border-radius:20px;font-size:14px}
-.chat-input input:focus{border-color:var(--primary)}
 .chat-input button{width:38px;height:38px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:16px}
 
 @media (max-width:640px){
@@ -316,7 +311,16 @@ const CLASSES_SEED = Array.from({length:10},(_,i)=>({
   name:`Class ${i+1}`, nameHi:`कक्षा ${i+1}`, active:true
 }));
 
-const GEMINI_MODEL = 'gemini-1.5-flash';
+/* Multiple Gemini models — code will try each in order until one works. */
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-flash-latest',
+  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash-latest'
+];
+const GEMINI_API_VERSION = 'v1beta';
 
 /* ======================= I18N ======================= */
 const I18N = {
@@ -365,7 +369,9 @@ const State = {
   user: null, profile: null, isAdmin: false, route: 'home',
   classes: [], currentClass: null, currentSubject: null, currentChapter: null,
   subjectsCache: {}, chaptersCache: {}, questionsCache: {},
-  chatContext: null, geminiKey: null
+  chatContext: null, geminiKey: null,
+  geminiModel: localStorage.getItem('sc_model') || 'gemini-2.5-flash',
+  workingModel: null
 };
 
 /* ======================= UTILS ======================= */
@@ -392,7 +398,6 @@ function setActive(page){
 }
 
 /* ======================= DATA SERVICE ======================= */
-/* NOTE: All queries avoid composite indexes by sorting client-side. */
 const DataService = {
   async getClasses(){
     const snap = await getDocs(collection(db,'classes'));
@@ -506,23 +511,31 @@ const AuthService = {
   async logout(){ await signOut(auth); State.user=null; State.profile=null; State.isAdmin=false; }
 };
 
-/* ======================= AI SERVICE (Direct Gemini API) ======================= */
+/* ======================= AI SERVICE (Direct Gemini API with fallback) ======================= */
 const AIService = {
   async loadKey(){
     try{
       const snap = await getDoc(doc(db,'settings','ai'));
-      State.geminiKey = snap.exists() ? (snap.data().geminiKey || null) : null;
+      if(snap.exists()){
+        const d = snap.data();
+        State.geminiKey = d.geminiKey || null;
+        if(d.geminiModel) State.geminiModel = d.geminiModel;
+      } else {
+        State.geminiKey = null;
+      }
     }catch(e){ State.geminiKey = null; }
     return State.geminiKey;
   },
-  async saveKey(key){
-    await setDoc(doc(db,'settings','ai'), { geminiKey: key, updatedAt: serverTimestamp() }, {merge:true});
+  async saveKey(key, model){
+    const data = { geminiKey: key, updatedAt: serverTimestamp() };
+    if(model) data.geminiModel = model;
+    await setDoc(doc(db,'settings','ai'), data, {merge:true});
     State.geminiKey = key;
+    if(model){ State.geminiModel = model; localStorage.setItem('sc_model', model); }
   },
-  async callGemini(prompt, systemInstruction){
+  async tryModel(model, prompt, systemInstruction){
     const key = State.geminiKey;
-    if(!key) throw new Error(t('aiKeyMissing'));
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+    const url = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${model}:generateContent?key=${key}`;
     const body = {
       contents: [{ role:'user', parts:[{ text: prompt }] }],
       ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {})
@@ -534,19 +547,61 @@ const AIService = {
     });
     const rawText = await r.text();
     if(!r.ok){
-      console.error('Gemini API error', r.status, rawText);
-      let detail = '';
-      try { detail = JSON.parse(rawText)?.error?.message || rawText; } catch(e){ detail = rawText; }
-      if(r.status === 400) throw new Error('Invalid AI request — ' + detail);
-      if(r.status === 403) throw new Error('AI key rejected — ' + detail);
-      if(r.status === 404) throw new Error('AI model not found. Try changing GEMINI_MODEL to "gemini-2.0-flash"');
-      if(r.status === 429) throw new Error('AI rate limit reached. Try again in a minute.');
-      if(r.status === 500) throw new Error('AI server error. Try again.');
-      throw new Error('AI error ('+r.status+'): ' + detail.slice(0,150));
+      let detail = rawText;
+      try { detail = JSON.parse(rawText)?.error?.message || rawText; } catch(e){}
+      const err = new Error(detail);
+      err.status = r.status;
+      throw err;
     }
     const data = JSON.parse(rawText);
     return data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || '';
-},
+  },
+  async callGemini(prompt, systemInstruction){
+    const key = State.geminiKey;
+    if(!key) throw new Error(t('aiKeyMissing'));
+
+    // Build try list: preferred model first, then all others
+    const models = [];
+    if(State.workingModel) models.push(State.workingModel);
+    if(State.geminiModel && !models.includes(State.geminiModel)) models.push(State.geminiModel);
+    GEMINI_MODELS.forEach(m => { if(!models.includes(m)) models.push(m); });
+
+    let lastErr = null;
+    for(const model of models){
+      try{
+        const answer = await this.tryModel(model, prompt, systemInstruction);
+        if(!State.workingModel){
+          State.workingModel = model;
+          console.log('✅ AI working with model:', model);
+        }
+        return answer;
+      }catch(e){
+        lastErr = e;
+        console.warn(`Model ${model} failed:`, e.status, e.message);
+        // If it's not a 404 or 400, stop trying (real error like auth/rate-limit)
+        if(e.status !== 404 && e.status !== 400) break;
+      }
+    }
+    // All models failed
+    if(lastErr?.status === 404){
+      throw new Error('No Gemini model available for your key. Please check if Generative Language API is enabled.');
+    }
+    if(lastErr?.status === 400) throw new Error('Bad request — ' + (lastErr.message||'invalid input'));
+    if(lastErr?.status === 403) throw new Error('AI key rejected. Check permissions in Google Cloud Console.');
+    if(lastErr?.status === 429) throw new Error('Rate limit reached. Try again in a minute.');
+    throw new Error(lastErr?.message || 'AI service unavailable');
+  },
+  async listModels(){
+    const key = State.geminiKey;
+    if(!key) throw new Error('No API key');
+    const url = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models?key=${key}`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('Cannot list models ('+r.status+')');
+    const data = await r.json();
+    return (data.models||[])
+      .filter(m => (m.supportedGenerationMethods||[]).includes('generateContent'))
+      .map(m => m.name.replace(/^models\//,''));
+  },
   async ask({prompt, chapterContext, classLevel, lang}){
     const sys = `You are SmartCampus AI, a friendly tutor for Class ${classLevel||'5'} students in India.
 - Answer at the student's level with simple language.
@@ -1295,52 +1350,82 @@ function renderAdminTab(tab){
   if(tab==='settings')  return renderAdminSettings(c);
 }
 
-/* ---- Settings (AI key) ---- */
+/* ---- Settings (AI key + model) ---- */
 async function renderAdminSettings(c){
   let current = State.geminiKey || '';
+  const modelOpts = ['gemini-2.5-flash','gemini-2.0-flash','gemini-2.5-flash-lite','gemini-2.0-flash-lite','gemini-flash-latest'];
+  const curModel = State.geminiModel || 'gemini-2.5-flash';
   c.innerHTML = `
     <h3 style="font-size:16px;font-weight:800;margin-bottom:14px">⚙️ Platform Settings</h3>
     <div style="background:#eff6ff;border-left:4px solid var(--primary);padding:14px 18px;border-radius:0 12px 12px 0;margin-bottom:18px;font-size:13px;line-height:1.7">
       <strong>🔑 Gemini API Key</strong><br>
       AI features (Chatbot, AI Ask, Content Generator) need a Google Gemini API key.<br>
-      Get your free key: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary);font-weight:600">aistudio.google.com/app/apikey</a><br>
-      <span class="muted" style="font-size:12px">Saved to Firestore. All users share this key.</span>
+      Get your free key: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary);font-weight:600">aistudio.google.com/app/apikey</a>
     </div>
     <div class="form-group">
       <label>Gemini API Key</label>
       <input type="text" id="aiKey" placeholder="AIza..." value="${esc(current)}" autocomplete="off">
     </div>
+    <div class="form-group">
+      <label>Preferred Model (auto-fallback enabled)</label>
+      <select id="aiModel">
+        ${modelOpts.map(m => `<option value="${m}" ${m===curModel?'selected':''}>${m}</option>`).join('')}
+      </select>
+      <div class="muted" style="font-size:12px;margin-top:4px">अगर एक model fail हो जाए, तो code अपने आप दूसरा try करेगा।</div>
+    </div>
     <div class="flex gap-12 mt-16" style="flex-wrap:wrap">
       <button class="btn btn-primary" id="saveKeyBtn">💾 ${t('save')}</button>
       <button class="btn btn-secondary" id="testKeyBtn">🧪 Test</button>
+      <button class="btn btn-secondary" id="listModelsBtn">📋 List Available Models</button>
       <button class="btn btn-danger" id="clearKeyBtn">🗑️ Clear</button>
     </div>
     <div id="keyStatus" class="mt-16"></div>`;
   $('#saveKeyBtn').onclick = async ()=>{
     const k = $('#aiKey').value.trim();
+    const m = $('#aiModel').value;
     if(!k){ toast('Enter a key','error'); return; }
     try{
-      await AIService.saveKey(k);
-      toast('✅ AI key saved','success');
-      $('#keyStatus').innerHTML = `<span style="color:var(--success)">✅ Key saved. AI features enabled.</span>`;
+      await AIService.saveKey(k, m);
+      State.workingModel = null;
+      toast('✅ AI key + model saved','success');
+      $('#keyStatus').innerHTML = `<span style="color:var(--success)">✅ Saved. AI features enabled.</span>`;
     }catch(e){ toast(e.message,'error'); }
   };
   $('#clearKeyBtn').onclick = async ()=>{
     if(!confirm('Remove AI key? AI features will stop working.')) return;
-    try{ await AIService.saveKey(''); $('#aiKey').value=''; toast('Cleared','info'); }
+    try{ await AIService.saveKey(''); $('#aiKey').value=''; State.workingModel=null; toast('Cleared','info'); }
     catch(e){ toast(e.message,'error'); }
   };
   $('#testKeyBtn').onclick = async ()=>{
     const k = $('#aiKey').value.trim();
     if(!k){ toast('Enter a key first','error'); return; }
-    $('#keyStatus').innerHTML = '<span class="muted">Testing…</span>';
-    const old = State.geminiKey;
+    $('#keyStatus').innerHTML = '<span class="muted">Testing… (trying models automatically)</span>';
+    const oldKey = State.geminiKey;
     State.geminiKey = k;
+    State.workingModel = null;
     try{
       const ans = await AIService.callGemini('Say "OK" in one word.', 'Reply in one word only.');
-      $('#keyStatus').innerHTML = `<span style="color:var(--success)">✅ Working! Response: ${esc(ans.slice(0,60))}</span>`;
+      $('#keyStatus').innerHTML = `<span style="color:var(--success)">✅ Working! Model: <b>${State.workingModel}</b> → "${esc(ans.slice(0,40))}"</span>`;
     }catch(e){
-      State.geminiKey = old;
+      State.geminiKey = oldKey;
+      $('#keyStatus').innerHTML = `<span style="color:var(--danger)">❌ ${esc(e.message)}</span>`;
+    }
+  };
+  $('#listModelsBtn').onclick = async ()=>{
+    const k = $('#aiKey').value.trim();
+    if(!k){ toast('Enter a key first','error'); return; }
+    $('#keyStatus').innerHTML = '<span class="muted">Loading available models…</span>';
+    const oldKey = State.geminiKey;
+    State.geminiKey = k;
+    try{
+      const models = await AIService.listModels();
+      $('#keyStatus').innerHTML = `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;font-size:13px">
+        <b>✅ Available models (${models.length}):</b><br>
+        ${models.map(m=>`<code style="display:inline-block;background:#fff;padding:2px 8px;border-radius:6px;margin:3px 3px 0 0;font-size:12px">${esc(m)}</code>`).join('')}
+        <div class="muted" style="margin-top:8px;font-size:12px">इनमें से कोई एक model ऊपर select करके Save करें.</div>
+      </div>`;
+    }catch(e){
+      State.geminiKey = oldKey;
       $('#keyStatus').innerHTML = `<span style="color:var(--danger)">❌ ${esc(e.message)}</span>`;
     }
   };
@@ -1733,7 +1818,7 @@ function renderAdminAIGen(c){
     if(!file){ toast('Select a PDF','error'); return; }
     if(!State.geminiKey){ toast(t('aiKeyMissing'),'error'); return; }
     const out = $('#genOut');
-    out.innerHTML = `<div class="empty"><div class="icon">⏳</div><p>Reading PDF & generating content…</p></div>`;
+    out.innerHTML = `<div class="empty"><div class="icon">⏳</div><p>Reading PDF & generating content… (this may take 30-60 seconds)</p></div>`;
     try{
       const text = await extractPdfText(file);
       const result = await AIService.generate({
@@ -1751,7 +1836,7 @@ function renderAdminAIGen(c){
       });
       out.innerHTML = `
         <div style="background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:16px">
-          <h4 style="font-weight:800;margin-bottom:10px">📋 Preview</h4>
+          <h4 style="font-weight:800;margin-bottom:10px">📋 Preview ${State.workingModel ? '<span class="muted" style="font-weight:400;font-size:12px">(model: '+State.workingModel+')</span>' : ''}</h4>
           <div class="form-group"><label>Explanation (HTML)</label><textarea id="gExplain">${esc(result.explanation||'')}</textarea></div>
           <div class="form-group"><label>MCQs (JSON)</label><textarea id="gMcq">${esc(JSON.stringify(result.mcqs||[],null,2))}</textarea></div>
           <div class="form-group"><label>Fill-in-Blanks (JSON)</label><textarea id="gFill">${esc(JSON.stringify(result.fills||[],null,2))}</textarea></div>
