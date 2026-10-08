@@ -399,15 +399,15 @@ const DataService = {
     const snap = await getDocs(query(collection(db,'classes'), orderBy('order')));
     return snap.docs.map(d=>({id:d.id, ...d.data()}));
   },
-  async getSubjects(classId){
+ async getSubjects(classId){
     if(State.subjectsCache[classId]) return State.subjectsCache[classId];
     const snap = await getDocs(query(
       collection(db,'subjects'),
-      where('classId','==',classId),
-      where('active','==',true),
-      orderBy('order')
+      where('classId','==',classId)
     ));
-    const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const list = snap.docs.map(d=>({id:d.id, ...d.data()}))
+      .filter(s => s.active !== false)
+      .sort((a,b) => (a.order||0) - (b.order||0));
     State.subjectsCache[classId] = list;
     return list;
   },
@@ -415,10 +415,10 @@ const DataService = {
     if(State.chaptersCache[subjectId]) return State.chaptersCache[subjectId];
     const snap = await getDocs(query(
       collection(db,'chapters'),
-      where('subjectId','==',subjectId),
-      orderBy('order')
+      where('subjectId','==',subjectId)
     ));
-    const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const list = snap.docs.map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b) => (a.order||0) - (b.order||0));
     State.chaptersCache[subjectId] = list;
     return list;
   },
@@ -1149,10 +1149,9 @@ async function renderDashboard(){
   try{
     if(!State.user){ $('#dashBody').innerHTML = ''; return; }
     const snap = await getDocs(query(
-      collection(db,'progress'),
-      where('studentId','==',State.user.uid),
-      orderBy('timestamp','desc'),
-      limit(100)
+  collection(db,'progress'),
+  where('studentId','==',State.user.uid),
+  limit(100)
     ));
     const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
     const bySubject = {};
@@ -1815,8 +1814,18 @@ async function renderAdminStudents(c){
 async function renderAdminResults(c){
   c.innerHTML = `<h3 style="font-size:16px;font-weight:800;margin-bottom:14px">📊 Recent Quiz Results</h3><div id="resList"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
   try{
-    const snap = await getDocs(query(collection(db,'quizResults'), orderBy('completedAt','desc'), limit(50)));
-    const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const snap = await getDocs(query(collection(db,'quizResults'), limit(50)));
+    const items = snap.docs.map(d=>({id:d.id, ...d.data()}))
+  .sort((a,b) => {
+    const ta = a.timestamp?.seconds || 0;
+    const tb = b.timestamp?.seconds || 0;
+    return tb - ta;
+  });
+  .sort((a,b) => {
+    const ta = a.completedAt?.seconds || 0;
+    const tb = b.completedAt?.seconds || 0;
+    return tb - ta;
+  });
     $('#resList').innerHTML = list.length ? list.map(r=>`
       <div class="item-row">
         <div class="info">
