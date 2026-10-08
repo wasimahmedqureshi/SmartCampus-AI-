@@ -316,7 +316,7 @@ const CLASSES_SEED = Array.from({length:10},(_,i)=>({
   name:`Class ${i+1}`, nameHi:`कक्षा ${i+1}`, active:true
 }));
 
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODEL = 'gemini-2.0-flash';
 
 /* ======================= I18N ======================= */
 const I18N = {
@@ -532,17 +532,21 @@ const AIService = {
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(body)
     });
+    const rawText = await r.text();
     if(!r.ok){
-      const txt = await r.text();
-      console.error('Gemini error', r.status, txt);
-      if(r.status === 400) throw new Error('Invalid AI key or request.');
-      if(r.status === 403) throw new Error('AI key rejected. Check API permissions.');
-      if(r.status === 429) throw new Error('AI rate limit. Try again in a minute.');
-      throw new Error('AI service unavailable ('+r.status+')');
+      console.error('Gemini API error', r.status, rawText);
+      let detail = '';
+      try { detail = JSON.parse(rawText)?.error?.message || rawText; } catch(e){ detail = rawText; }
+      if(r.status === 400) throw new Error('Invalid AI request — ' + detail);
+      if(r.status === 403) throw new Error('AI key rejected — ' + detail);
+      if(r.status === 404) throw new Error('AI model not found. Try changing GEMINI_MODEL to "gemini-2.0-flash"');
+      if(r.status === 429) throw new Error('AI rate limit reached. Try again in a minute.');
+      if(r.status === 500) throw new Error('AI server error. Try again.');
+      throw new Error('AI error ('+r.status+'): ' + detail.slice(0,150));
     }
-    const data = await r.json();
+    const data = JSON.parse(rawText);
     return data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || '';
-  },
+},
   async ask({prompt, chapterContext, classLevel, lang}){
     const sys = `You are SmartCampus AI, a friendly tutor for Class ${classLevel||'5'} students in India.
 - Answer at the student's level with simple language.
