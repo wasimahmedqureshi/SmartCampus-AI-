@@ -119,8 +119,6 @@ img{max-width:100%;display:block}
 .ch-tabs button{padding:14px 18px;font-size:14px;font-weight:600;color:var(--gray-500);border-bottom:3px solid transparent;white-space:nowrap;transition:var(--transition)}
 .ch-tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
 .ch-body{padding:26px}
-.tab-pane{display:none;animation:fadeUp .28s ease}
-.tab-pane.active{display:block}
 
 .content-block h1,.content-block h2,.content-block h3,.content-block h4{color:var(--gray-900);margin:14px 0 8px;line-height:1.3}
 .content-block h2{font-size:20px}.content-block h3{font-size:17px}
@@ -289,7 +287,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc,
-  collection, query, where, orderBy, getDocs, serverTimestamp, limit, writeBatch
+  collection, query, where, getDocs, serverTimestamp, limit, writeBatch
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import {
   getStorage, ref as sRef, uploadBytesResumable, getDownloadURL
@@ -394,12 +392,14 @@ function setActive(page){
 }
 
 /* ======================= DATA SERVICE ======================= */
+/* NOTE: All queries avoid composite indexes by sorting client-side. */
 const DataService = {
   async getClasses(){
-    const snap = await getDocs(query(collection(db,'classes'), orderBy('order')));
-    return snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const snap = await getDocs(collection(db,'classes'));
+    return snap.docs.map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b) => (a.order||0) - (b.order||0));
   },
- async getSubjects(classId){
+  async getSubjects(classId){
     if(State.subjectsCache[classId]) return State.subjectsCache[classId];
     const snap = await getDocs(query(
       collection(db,'subjects'),
@@ -463,11 +463,13 @@ const AuthService = {
   },
   async loadProfile(){
     if(!State.user) return null;
-    const snap = await getDoc(doc(db,'students',State.user.uid));
-    if(snap.exists()){
-      State.profile = snap.data();
-      State.isAdmin = State.profile.role === 'admin' || State.profile.role === 'teacher';
-    } else { State.profile = null; State.isAdmin = false; }
+    try{
+      const snap = await getDoc(doc(db,'students',State.user.uid));
+      if(snap.exists()){
+        State.profile = snap.data();
+        State.isAdmin = State.profile.role === 'admin' || State.profile.role === 'teacher';
+      } else { State.profile = null; State.isAdmin = false; }
+    }catch(e){ console.warn('profile load failed', e); State.profile=null; State.isAdmin=false; }
     return State.profile;
   },
   async signupStudent({name, email, password, classId}){
@@ -1149,11 +1151,16 @@ async function renderDashboard(){
   try{
     if(!State.user){ $('#dashBody').innerHTML = ''; return; }
     const snap = await getDocs(query(
-  collection(db,'progress'),
-  where('studentId','==',State.user.uid),
-  limit(100)
+      collection(db,'progress'),
+      where('studentId','==',State.user.uid),
+      limit(100)
     ));
-    const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const items = snap.docs.map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b) => {
+        const ta = a.timestamp?.seconds || 0;
+        const tb = b.timestamp?.seconds || 0;
+        return tb - ta;
+      });
     const bySubject = {};
     items.forEach(it=>{
       if(!bySubject[it.subjectId]) bySubject[it.subjectId] = {scores:[], count:0};
@@ -1353,9 +1360,15 @@ async function renderAdminChapters(c){
   classSel.value = 'class-5';
   async function loadSubjects(){
     const sid = classSel.value;
-    const subs = await DataService.getSubjects(sid);
-    $('#fltSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.icon||'📘')} ${esc(s.name)}</option>`).join('') || '<option value="">No subjects</option>';
-    await loadChapters();
+    try{
+      const subs = await DataService.getSubjects(sid);
+      $('#fltSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.icon||'📘')} ${esc(s.name)}</option>`).join('') || '<option value="">No subjects</option>';
+      await loadChapters();
+    }catch(e){
+      console.error(e);
+      $('#fltSubject').innerHTML = '<option value="">Error loading</option>';
+      $('#chList').innerHTML = `<div class="empty"><div class="icon">⚠️</div><p>${esc(e.message)}</p></div>`;
+    }
   }
   async function loadChapters(){
     const subId = $('#fltSubject').value;
@@ -1575,9 +1588,13 @@ async function renderAdminPDF(c){
   $('#pdfClass').innerHTML = classList.map(x=>`<option value="${x.id}">${esc(State.lang==='hi'?x.nameHi:x.name)}</option>`).join('');
   $('#pdfClass').value = 'class-5';
   async function load(){
-    const subs = await DataService.getSubjects($('#pdfClass').value);
-    $('#pdfSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
-    await listChapters();
+    try{
+      const subs = await DataService.getSubjects($('#pdfClass').value);
+      $('#pdfSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+      await listChapters();
+    }catch(e){
+      $('#pdfList').innerHTML = `<div class="empty"><div class="icon">⚠️</div><p>${esc(e.message)}</p></div>`;
+    }
   }
   async function listChapters(){
     const subId = $('#pdfSubject').value;
@@ -1623,9 +1640,11 @@ async function renderAdminQuestions(c){
   $('#qbClass').value = 'class-5';
   let typeFilter = 'all';
   async function loadSubs(){
-    const subs = await DataService.getSubjects($('#qbClass').value);
-    $('#qbSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
-    await loadChapters();
+    try{
+      const subs = await DataService.getSubjects($('#qbClass').value);
+      $('#qbSubject').innerHTML = subs.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+      await loadChapters();
+    }catch(e){ console.error(e); }
   }
   async function loadChapters(){
     const subId = $('#qbSubject').value;
@@ -1733,11 +1752,13 @@ function renderAdminAIGen(c){
           <div class="form-group"><label>MCQs (JSON)</label><textarea id="gMcq">${esc(JSON.stringify(result.mcqs||[],null,2))}</textarea></div>
           <div class="form-group"><label>Fill-in-Blanks (JSON)</label><textarea id="gFill">${esc(JSON.stringify(result.fills||[],null,2))}</textarea></div>
           <div class="form-group"><label>Q&A (JSON)</label><textarea id="gQa">${esc(JSON.stringify(result.qas||[],null,2))}</textarea></div>
+          <div class="form-group"><label>Subject ID (Firestore)</label><input id="gSubjId" placeholder="e.g. class5-science"></div>
           <button class="btn btn-primary mt-8" id="saveGen">💾 Save to new chapter</button>
         </div>`;
       $('#saveGen').onclick = async ()=>{
         try{
-          const subId = prompt('Paste subjectId (e.g. class5-science):') || '';
+          const subId = $('#gSubjId').value.trim();
+          if(!subId){ toast('Subject ID required. Find it in Firestore → subjects','error'); return; }
           const chRef = await addDoc(collection(db,'chapters'), {
             classId: $('#aiClass').value,
             subjectId: subId,
@@ -1815,17 +1836,12 @@ async function renderAdminResults(c){
   c.innerHTML = `<h3 style="font-size:16px;font-weight:800;margin-bottom:14px">📊 Recent Quiz Results</h3><div id="resList"><div class="empty"><div class="icon">⏳</div><p>${t('loading')}</p></div></div>`;
   try{
     const snap = await getDocs(query(collection(db,'quizResults'), limit(50)));
-    const items = snap.docs.map(d=>({id:d.id, ...d.data()}))
-  .sort((a,b) => {
-    const ta = a.timestamp?.seconds || 0;
-    const tb = b.timestamp?.seconds || 0;
-    return tb - ta;
-  });
-  .sort((a,b) => {
-    const ta = a.completedAt?.seconds || 0;
-    const tb = b.completedAt?.seconds || 0;
-    return tb - ta;
-  });
+    const list = snap.docs.map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b) => {
+        const ta = a.completedAt?.seconds || 0;
+        const tb = b.completedAt?.seconds || 0;
+        return tb - ta;
+      });
     $('#resList').innerHTML = list.length ? list.map(r=>`
       <div class="item-row">
         <div class="info">
@@ -1951,7 +1967,6 @@ async function init(){
   }
   await AuthService.bootstrap();
   updateUserChip();
-  // Load AI key (once)
   try{ await AIService.loadKey(); }catch(e){ console.warn('key load failed', e); }
   if(State.profile) afterLogin();
   else if(State.user && !State.user.isAnonymous) afterLogin();
