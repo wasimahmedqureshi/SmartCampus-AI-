@@ -649,9 +649,9 @@ const AIService = {
     return this.callGemini(userPrompt, sys);
   },
   async generate({pdfText, chapterTitle, subjectName, options}){
-    const mcqCount = Math.min(30, parseInt(options.mcqCount)||7);
-    const fillCount = Math.min(30, parseInt(options.fillCount)||7);
-    const qaCount = Math.min(30, parseInt(options.qaCount)||7);
+    const mcqCount = Math.min(30, parseInt(options.mcqCount)||5);
+    const fillCount = Math.min(30, parseInt(options.fillCount)||5);
+    const qaCount = Math.min(30, parseInt(options.qaCount)||5);
     const sys = `You are an expert curriculum writer for Class 1–10 (NCERT-style) education in India.
 Generate age-appropriate bilingual content strictly based on the provided PDF text.
 Return STRICT JSON only — no commentary, no markdown fences — matching this schema:
@@ -1844,10 +1844,10 @@ function renderAdminAIGen(c){
       <div class="chip active" data-opt="hi">🇮🇳 Hindi</div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>MCQ count</label><input type="number" id="cntMcq" value="7"></div>
-      <div class="form-group"><label>Fill count</label><input type="number" id="cntFill" value="7"></div>
+      <div class="form-group"><label>MCQ count</label><input type="number" id="cntMcq" value="5"></div>
+      <div class="form-group"><label>Fill count</label><input type="number" id="cntFill" value="5"></div>
     </div>
-    <div class="form-group"><label>Q&A count</label><input type="number" id="cntQa" value="7"></div>
+    <div class="form-group"><label>Q&A count</label><input type="number" id="cntQa" value="5"></div>
     <button class="btn btn-primary mt-8" id="genBtn">✨ Generate</button>
     <div id="genOut" class="mt-24"></div>`;
   const opts = new Set(['explain','mcq','fill','qa','hi']);
@@ -1872,9 +1872,9 @@ function renderAdminAIGen(c){
         options: {
           explain: opts.has('explain'), mcq: opts.has('mcq'),
           fill: opts.has('fill'), qa: opts.has('qa'), hindi: opts.has('hi'),
-          mcqCount: parseInt($('#cntMcq').value)||7,
-          fillCount: parseInt($('#cntFill').value)||7,
-          qaCount: parseInt($('#cntQa').value)||7
+          mcqCount: parseInt($('#cntMcq').value)||5,
+          fillCount: parseInt($('#cntFill').value)||5,
+          qaCount: parseInt($('#cntQa').value)||5
         }
       });
       out.innerHTML = `
