@@ -538,7 +538,8 @@ const AIService = {
     const url = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models/${model}:generateContent?key=${key}`;
     const body = {
       contents: [{ role:'user', parts:[{ text: prompt }] }],
-      ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {})
+      ...(systemInstruction ? { systemInstruction: { parts: [{ text: systemInstruction }] } } : {}),
+      generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
     };
     const r = await fetch(url, {
       method:'POST',
@@ -556,39 +557,72 @@ const AIService = {
     const data = JSON.parse(rawText);
     return data.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || '';
   },
+  sleep(ms){ return new Promise(r => setTimeout(r, ms)); },
+
   async callGemini(prompt, systemInstruction){
     const key = State.geminiKey;
     if(!key) throw new Error(t('aiKeyMissing'));
 
-    // Build try list: preferred model first, then all others
+    // Build try list: working model first, then preferred, then all others
     const models = [];
     if(State.workingModel) models.push(State.workingModel);
     if(State.geminiModel && !models.includes(State.geminiModel)) models.push(State.geminiModel);
     GEMINI_MODELS.forEach(m => { if(!models.includes(m)) models.push(m); });
 
     let lastErr = null;
-    for(const model of models){
-      try{
-        const answer = await this.tryModel(model, prompt, systemInstruction);
-        if(!State.workingModel){
-          State.workingModel = model;
-          console.log('✅ AI working with model:', model);
+    let totalAttempts = 0;
+    const MAX_ROUNDS = 2; // 2 rounds × all models
+
+    for(let round = 0; round < MAX_ROUNDS; round++){
+      if(round > 0){
+        // Before second round, wait 3 seconds
+        console.log(`⚠️ All models busy. Retrying in 3s (round ${round+1}/${MAX_ROUNDS})...`);
+        await this.sleep(3000);
+      }
+      for(const model of models){
+        totalAttempts++;
+        try{
+          const answer = await this.tryModel(model, prompt, systemInstruction);
+          if(!State.workingModel){
+            State.workingModel = model;
+            console.log('✅ AI working with model:', model);
+          }
+          return answer;
+        }catch(e){
+          lastErr = e;
+          console.warn(`[Attempt ${totalAttempts}] Model ${model} failed:`, e.status, e.message.slice(0,120));
+
+          // 404 (model not found) or 400 (bad request) → try next model immediately
+          if(e.status === 404 || e.status === 400) continue;
+
+          // 503 (overloaded) or 429 (rate limit) → try next model
+          if(e.status === 503 || e.status === 429) continue;
+
+          // 403 (auth) → no point trying other models, stop
+          if(e.status === 403) break;
+
+          // Other errors → try next model too
+          continue;
         }
-        return answer;
-      }catch(e){
-        lastErr = e;
-        console.warn(`Model ${model} failed:`, e.status, e.message);
-        // If it's not a 404 or 400, stop trying (real error like auth/rate-limit)
-        if(e.status !== 404 && e.status !== 400) break;
       }
     }
-    // All models failed
-    if(lastErr?.status === 404){
-      throw new Error('No Gemini model available for your key. Please check if Generative Language API is enabled.');
+
+    // All attempts failed
+    if(lastErr?.status === 503){
+      throw new Error('AI servers are very busy right now. Please wait 1-2 minutes and try again. (Google के सभी servers busy हैं, 1-2 मिनट बाद फिर try करें)');
     }
-    if(lastErr?.status === 400) throw new Error('Bad request — ' + (lastErr.message||'invalid input'));
-    if(lastErr?.status === 403) throw new Error('AI key rejected. Check permissions in Google Cloud Console.');
-    if(lastErr?.status === 429) throw new Error('Rate limit reached. Try again in a minute.');
+    if(lastErr?.status === 429){
+      throw new Error('AI rate limit reached. Please wait 1 minute and try again.');
+    }
+    if(lastErr?.status === 404){
+      throw new Error('No Gemini model available for your key. Check Google Cloud Console → Generative Language API enabled?');
+    }
+    if(lastErr?.status === 403){
+      throw new Error('AI key rejected. Get a fresh key from aistudio.google.com');
+    }
+    if(lastErr?.status === 400){
+      throw new Error('Invalid request — ' + (lastErr.message || '').slice(0,150));
+    }
     throw new Error(lastErr?.message || 'AI service unavailable');
   },
   async listModels(){
@@ -649,7 +683,17 @@ Return ONLY valid JSON.`;
     const cleaned = raw.replace(/^```json\s*/i,'').replace(/```$/,'').trim();
     let parsed;
     try{ parsed = JSON.parse(cleaned); }
-    catch(e){ console.error('AI non-JSON:', raw); throw new Error('AI returned invalid content.'); }
+    catch(e){
+      // Try to extract JSON from within text (AI sometimes adds commentary)
+      const m = cleaned.match(/\{[\s\S]*\}/);
+      if(m){
+        try{ parsed = JSON.parse(m[0]); }
+        catch(e2){ console.error('AI non-JSON:', raw); throw new Error('AI returned invalid content. Try again.'); }
+      } else {
+        console.error('AI non-JSON:', raw);
+        throw new Error('AI returned invalid content. Try again.');
+      }
+    }
     return {
       explanation: parsed.explanation || '',
       mcqs:  parsed.mcqs  || [],
@@ -658,7 +702,6 @@ Return ONLY valid JSON.`;
     };
   }
 };
-
 /* ======================= STORAGE ======================= */
 const StorageService = {
   async uploadPDF(file, {classId, subjectId, chapterId, onProgress}){
